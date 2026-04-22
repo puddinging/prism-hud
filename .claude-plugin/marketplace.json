@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code statusline HUD with a per-position gradient progress bar. Forked from jarrodwatts/claude-hud.",
-    "version": "0.1.3"
+    "version": "0.2.0"
   },
   "plugins": [
     {

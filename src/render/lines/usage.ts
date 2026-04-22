@@ -1,4 +1,5 @@
 import type { RenderContext } from '../../types.js';
+import type { GradientConfig } from '../../config.js';
 import { isLimitReached } from '../../types.js';
 import { getProviderLabel } from '../../stdin.js';
 import { critical, label, getGradientTextColor, quotaBar, RESET } from '../colors.js';
@@ -7,6 +8,7 @@ import { getAdaptiveBarWidth } from '../../utils/terminal.js';
 export function renderUsageLine(ctx: RenderContext): string | null {
   const display = ctx.config?.display;
   const colors = ctx.config?.colors;
+  const gradient = ctx.config?.gradient;
 
   if (display?.showUsage === false) {
     return null;
@@ -48,6 +50,7 @@ export function renderUsageLine(ctx: RenderContext): string | null {
       percent: sevenDay,
       resetAt: ctx.usageData.sevenDayResetAt,
       colors,
+      gradient,
       usageBarEnabled,
       barWidth,
       forceLabel: true,
@@ -60,6 +63,7 @@ export function renderUsageLine(ctx: RenderContext): string | null {
     percent: fiveHour,
     resetAt: ctx.usageData.fiveHourResetAt,
     colors,
+    gradient,
     usageBarEnabled,
     barWidth,
   });
@@ -70,6 +74,7 @@ export function renderUsageLine(ctx: RenderContext): string | null {
       percent: sevenDay,
       resetAt: ctx.usageData.sevenDayResetAt,
       colors,
+      gradient,
       usageBarEnabled,
       barWidth,
     });
@@ -79,11 +84,11 @@ export function renderUsageLine(ctx: RenderContext): string | null {
   return `${usageLabel} ${fiveHourPart}`;
 }
 
-function formatUsagePercent(percent: number | null, colors: RenderContext['config']['colors'] | undefined, width: number): string {
+function formatUsagePercent(percent: number | null, colors: RenderContext['config']['colors'] | undefined, width: number, gradient: GradientConfig | undefined): string {
   if (percent === null) {
     return label('--', colors);
   }
-  const color = getGradientTextColor(percent, width);
+  const color = getGradientTextColor(percent, width, gradient);
   return `${color}${percent}%${RESET}`;
 }
 
@@ -92,6 +97,7 @@ function formatUsageWindowPart({
   percent,
   resetAt,
   colors,
+  gradient,
   usageBarEnabled,
   barWidth,
   forceLabel = false,
@@ -100,17 +106,18 @@ function formatUsageWindowPart({
   percent: number | null;
   resetAt: Date | null;
   colors?: RenderContext['config']['colors'];
+  gradient?: GradientConfig;
   usageBarEnabled: boolean;
   barWidth: number;
   forceLabel?: boolean;
 }): string {
-  const usageDisplay = formatUsagePercent(percent, colors, barWidth);
+  const usageDisplay = formatUsagePercent(percent, colors, barWidth, gradient);
   const reset = formatResetTime(resetAt);
 
   if (usageBarEnabled) {
     const body = reset
-      ? `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay} (resets in ${reset})`
-      : `${quotaBar(percent ?? 0, barWidth, colors)} ${usageDisplay}`;
+      ? `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay} (resets in ${reset})`
+      : `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}`;
     return forceLabel ? `${label}: ${body}` : body;
   }
 

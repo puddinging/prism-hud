@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.2.0] - 2026-04-22
+
+### Added
+
+- **Fully customizable gradient bar.** New `gradient` config block lets you override:
+  - `gradient.colors` — any hex palette, any length ≥ 1 (sampled evenly across the bar width; 2 colors and 20 colors both work).
+  - `gradient.filledChar` — accepts either a single string (same glyph for all filled dots) or an array (per-position cycling; e.g. `["●","◆","★","▲","■"]` gives each dot its own shape).
+  - `gradient.emptyChar` — any glyph for unfilled dots.
+  - `gradient.emptyColor` — hex, named color, or 256-color index.
+  - Missing fields fall back to the default Material Design Accent palette introduced in 0.1.3.
+
+### Changed
+
+- `colors.context` / `colors.usage` / `colors.warning` / `colors.usageWarning` / `colors.critical` no longer affect bar fill or percentage text — both now read from `gradient` end-to-end. Those legacy entries still drive label/warning accents outside the bars.
+
 ## [0.1.3] - 2026-04-22
 
 ### Changed

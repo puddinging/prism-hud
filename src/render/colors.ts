@@ -1,4 +1,5 @@
-import type { HudColorName, HudColorValue, HudColorOverrides } from '../config.js';
+import type { HudColorName, HudColorValue, HudColorOverrides, GradientConfig } from '../config.js';
+import { DEFAULT_GRADIENT } from '../config.js';
 
 export const RESET = '\x1b[0m';
 
@@ -128,30 +129,21 @@ export function getQuotaColor(percent: number, colors?: Partial<HudColorOverride
   return resolveAnsi(colors?.usage, BRIGHT_BLUE);
 }
 
-// 10-step traffic-light gradient in Material Design Accent (A-series) vibe:
-// high saturation (~90%), even brightness (~50%), electric/neon feel —
-// same family as the reference color #09A5F7 that shaped the plugin's
-// visual identity. Green = safe, yellow = caution, red = danger.
-const GRADIENT_10: string[] = [
-  '#00E676', // Material green A400 — safe
-  '#3DEE4A', // interpolated bright green
-  '#76FF03', // Material light-green A400
-  '#C6FF00', // Material lime A400
-  '#FFEA00', // Material yellow A400 — caution
-  '#FFC400', // Material amber A400
-  '#FF9100', // Material orange A400
-  '#FF6D00', // Material orange A700
-  '#FF3D00', // Material deep-orange A400 — danger
-  '#FF1744', // Material red A400 — critical
-];
+function gradientColorAt(position: number, width: number, palette: string[]): string {
+  if (palette.length === 0) return '';
+  if (palette.length === 1) return hexToAnsi(palette[0]);
+  if (width <= 1) return hexToAnsi(palette[0]);
+  const idx = Math.round((position / (width - 1)) * (palette.length - 1));
+  const clamped = Math.min(palette.length - 1, Math.max(0, idx));
+  return hexToAnsi(palette[clamped]);
+}
 
-const EMPTY_DOT_COLOR = '\x1b[38;2;125;122;114m';
-
-function gradientColorAt(position: number, width: number): string {
-  if (width <= 1) return hexToAnsi(GRADIENT_10[0]);
-  const idx = Math.round((position / (width - 1)) * (GRADIENT_10.length - 1));
-  const clamped = Math.min(GRADIENT_10.length - 1, Math.max(0, idx));
-  return hexToAnsi(GRADIENT_10[clamped]);
+function getFilledCharAt(position: number, filledChar: string | string[]): string {
+  if (Array.isArray(filledChar)) {
+    if (filledChar.length === 0) return '●';
+    return filledChar[position % filledChar.length];
+  }
+  return filledChar;
 }
 
 /**
@@ -159,15 +151,17 @@ function gradientColorAt(position: number, width: number): string {
  * so accompanying text (e.g. "25%") matches the tip of the bar.
  * Falls back to the first gradient stop when no dot would be filled.
  */
-export function getGradientTextColor(percent: number, width: number = 10): string {
+export function getGradientTextColor(percent: number, width: number = 10, gradient: GradientConfig = DEFAULT_GRADIENT): string {
+  const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
   const safeWidth = Number.isFinite(width) ? Math.max(1, Math.round(width)) : 10;
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
   const filled = Math.round((safePercent / 100) * safeWidth);
-  if (filled === 0) return hexToAnsi(GRADIENT_10[0]);
-  return gradientColorAt(filled - 1, safeWidth);
+  if (filled === 0) return hexToAnsi(palette[0]);
+  return gradientColorAt(filled - 1, safeWidth, palette);
 }
 
-export function gradientBar(percent: number, width: number = 10): string {
+export function gradientBar(percent: number, width: number = 10, gradient: GradientConfig = DEFAULT_GRADIENT): string {
+  const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
   const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
   const filled = Math.round((safePercent / 100) * safeWidth);
@@ -175,18 +169,19 @@ export function gradientBar(percent: number, width: number = 10): string {
 
   let result = '';
   for (let i = 0; i < filled; i++) {
-    result += `${gradientColorAt(i, safeWidth)}●${RESET}`;
+    result += `${gradientColorAt(i, safeWidth, palette)}${getFilledCharAt(i, gradient.filledChar)}${RESET}`;
   }
   if (empty > 0) {
-    result += `${EMPTY_DOT_COLOR}${'○'.repeat(empty)}${RESET}`;
+    const emptyAnsi = resolveAnsi(gradient.emptyColor, DIM);
+    result += `${emptyAnsi}${gradient.emptyChar.repeat(empty)}${RESET}`;
   }
   return result;
 }
 
-export function quotaBar(percent: number, width: number = 10, _colors?: Partial<HudColorOverrides>): string {
-  return gradientBar(percent, width);
+export function quotaBar(percent: number, width: number = 10, gradient: GradientConfig = DEFAULT_GRADIENT): string {
+  return gradientBar(percent, width, gradient);
 }
 
-export function coloredBar(percent: number, width: number = 10, _colors?: Partial<HudColorOverrides>): string {
-  return gradientBar(percent, width);
+export function coloredBar(percent: number, width: number = 10, gradient: GradientConfig = DEFAULT_GRADIENT): string {
+  return gradientBar(percent, width, gradient);
 }

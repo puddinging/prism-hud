@@ -17,12 +17,14 @@ export function renderIdentityLine(ctx: RenderContext): string {
   }
 
   const display = ctx.config?.display;
+  const gradient = ctx.config?.gradient;
+  const barWidth = getAdaptiveBarWidth();
   const contextValueMode = display?.contextValue ?? 'percent';
   const contextValue = formatContextValue(ctx, percent, contextValueMode);
-  const contextValueDisplay = `${getGradientTextColor(percent, getAdaptiveBarWidth())}${contextValue}${RESET}`;
+  const contextValueDisplay = `${getGradientTextColor(percent, barWidth, gradient)}${contextValue}${RESET}`;
 
   let line = display?.showContextBar !== false
-    ? `${label('Context', colors)} ${coloredBar(percent, getAdaptiveBarWidth(), colors)} ${contextValueDisplay}`
+    ? `${label('Context', colors)} ${coloredBar(percent, barWidth, gradient)} ${contextValueDisplay}`
     : `${label('Context', colors)} ${contextValueDisplay}`;
 
   if (display?.showTokenBreakdown !== false && percent >= 85) {

@@ -35,6 +35,21 @@ export interface HudColorOverrides {
   custom: HudColorValue;
 }
 
+/**
+ * Per-bar gradient configuration.
+ * - `colors`: hex palette sampled by dot position across the bar width.
+ *   Any length ≥ 1 works — shorter arrays get sampled, longer ones also.
+ * - `filledChar`: string uses the same char for every filled dot;
+ *   array assigns a char per dot position (cycles if shorter than width).
+ * - `emptyChar` / `emptyColor`: glyph + color for unfilled dots.
+ */
+export interface GradientConfig {
+  colors: string[];
+  filledChar: string | string[];
+  emptyChar: string;
+  emptyColor: HudColorValue;
+}
+
 export const DEFAULT_ELEMENT_ORDER: HudElement[] = [
   'project',
   'context',
@@ -83,6 +98,7 @@ export interface HudConfig {
     customLine: string;
   };
   colors: HudColorOverrides;
+  gradient: GradientConfig;
 }
 
 export const DEFAULT_CONFIG: HudConfig = {
@@ -132,7 +148,26 @@ export const DEFAULT_CONFIG: HudConfig = {
     label: 'dim',
     custom: 208,
   },
+  gradient: {
+    colors: [
+      '#00E676',
+      '#3DEE4A',
+      '#76FF03',
+      '#C6FF00',
+      '#FFEA00',
+      '#FFC400',
+      '#FF9100',
+      '#FF6D00',
+      '#FF3D00',
+      '#FF1744',
+    ],
+    filledChar: '●',
+    emptyChar: '○',
+    emptyColor: '#7D7A72',
+  },
 };
+
+export const DEFAULT_GRADIENT: GradientConfig = DEFAULT_CONFIG.gradient;
 
 export function getConfigPath(): string {
   const homeDir = os.homedir();
@@ -233,6 +268,49 @@ function migrateConfig(userConfig: Partial<HudConfig> & LegacyConfig): Partial<H
 function validateThreshold(value: unknown, max = 100): number {
   if (typeof value !== 'number') return 0;
   return Math.max(0, Math.min(max, value));
+}
+
+function validateCharValue(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  if (value.length === 0 || value.length > 8) return null;
+  return value;
+}
+
+function validateGradientColors(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item === 'string' && HEX_COLOR_PATTERN.test(item)) {
+      out.push(item);
+    }
+  }
+  return out.length > 0 ? out : null;
+}
+
+function validateFilledChar(value: unknown): string | string[] | null {
+  if (typeof value === 'string') {
+    return validateCharValue(value);
+  }
+  if (Array.isArray(value)) {
+    const out: string[] = [];
+    for (const item of value) {
+      const ch = validateCharValue(item);
+      if (ch !== null) out.push(ch);
+    }
+    return out.length > 0 ? out : null;
+  }
+  return null;
+}
+
+function validateGradient(value: unknown): GradientConfig {
+  const raw = (typeof value === 'object' && value !== null ? value : {}) as Partial<GradientConfig>;
+  const colors = validateGradientColors(raw.colors) ?? DEFAULT_GRADIENT.colors;
+  const filledChar = validateFilledChar(raw.filledChar) ?? DEFAULT_GRADIENT.filledChar;
+  const emptyChar = validateCharValue(raw.emptyChar) ?? DEFAULT_GRADIENT.emptyChar;
+  const emptyColor = validateColorValue(raw.emptyColor)
+    ? raw.emptyColor
+    : DEFAULT_GRADIENT.emptyColor;
+  return { colors, filledChar, emptyChar, emptyColor };
 }
 
 export function mergeConfig(userConfig: Partial<HudConfig>): HudConfig {
@@ -363,7 +441,9 @@ export function mergeConfig(userConfig: Partial<HudConfig>): HudConfig {
       : DEFAULT_CONFIG.colors.custom,
   };
 
-  return { lineLayout, showSeparators, pathLevels, elementOrder, gitStatus, display, colors };
+  const gradient = validateGradient(migrated.gradient);
+
+  return { lineLayout, showSeparators, pathLevels, elementOrder, gitStatus, display, colors, gradient };
 }
 
 export async function loadConfig(): Promise<HudConfig> {

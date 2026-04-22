@@ -58,9 +58,48 @@ Then wire it up by editing `~/.claude/settings.json`:
 
 ## Configuration
 
-Same model as upstream — edit `~/.claude/plugins/prism-hud/config.json`. All the original `display.*`, `gitStatus.*`, `elementOrder`, `lineLayout` etc. options are preserved.
+Edit `~/.claude/plugins/prism-hud/config.json`. All upstream options (`display.*`, `gitStatus.*`, `elementOrder`, `lineLayout`, `colors.*`) are preserved — see below for the prism-hud-specific section.
 
-Note: the `colors.context` / `colors.usage` / `colors.warning` / `colors.usageWarning` / `colors.critical` entries no longer affect the **bar fill** — bars always render the 10-step gradient. They still control the **percentage text color** next to each bar.
+### Customizing the gradient bar
+
+Add a `gradient` block to override any or all of: palette, dot character, empty dot character, empty dot color. Only the fields you set override the defaults.
+
+```json
+{
+  "gradient": {
+    "colors": [
+      "#00E676", "#3DEE4A", "#76FF03", "#C6FF00", "#FFEA00",
+      "#FFC400", "#FF9100", "#FF6D00", "#FF3D00", "#FF1744"
+    ],
+    "filledChar": "●",
+    "emptyChar": "○",
+    "emptyColor": "#7D7A72"
+  }
+}
+```
+
+**`colors`** — hex palette, any length ≥ 1. Sampled evenly across the bar width: 10 colors ↔ 10 dots 1:1; 2 colors ↔ first half gets color 1, second half color 2; 20 colors ↔ every 2nd sampled.
+
+**`filledChar`** — accepts **either a string** (same char for every filled dot) **or an array of strings** (per-position override; cycles if shorter than the bar width).
+
+```json
+// uniform:   ● ● ● ● ● ● ● ● ● ●
+"filledChar": "●"
+
+// bar-chart style:   ▰ ▰ ▰ ▰ ▰ ▰ ▰ ▰ ▰ ▰
+"filledChar": "▰"
+
+// shape-per-position:   ● ◆ ★ ▲ ■ ● ◆ ★ ▲ ■
+"filledChar": ["●", "◆", "★", "▲", "■"]
+```
+
+**`emptyChar`** — glyph for empty dots (string, 1–8 chars).
+
+**`emptyColor`** — hex (`#RRGGBB`), named color (`dim`, `red`, `green`, `yellow`, `magenta`, `cyan`, `brightBlue`, `brightMagenta`), or 256-color index (0–255).
+
+### Notes on legacy color config
+
+The `colors.context` / `colors.usage` / `colors.warning` / `colors.usageWarning` / `colors.critical` entries no longer affect the bar fill or the percentage text — both now follow `gradient`. They still drive legacy warning labels (e.g. "⚠ Limit reached") and other non-bar accents.
 
 ## Build and develop
 
