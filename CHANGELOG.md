@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.3.0] - 2026-04-22
+
+### Added
+
+- **Per-character gradient text.** New `gradientText()` helper paints percentage labels (`5%`, `18% ↻2h36m`, `92% (920k/1.0M)`, etc.) by interpolating, character by character, across the *actual* colors of the currently lit bar dots — so 1 dot lit reads as a single solid color, 9 dots lit reads as a smooth green→red wash. Replaces the old "single color of the rightmost lit dot" approach (introduced in 0.1.1).
+
+### Changed
+
+- **Compact statusline layout** is now the default look — no config required:
+  - `Context` label shortened to `ctx`; the outer `Usage` wrapper label removed in favor of inline `5h` / `7d` window tags that always render.
+  - `(resets in 2h 36m)` collapsed to `↻2h36m` (icon prefix, no inner spaces) — saves ~14 visible columns per usage segment.
+  - Default `gradient.emptyChar` changed from `○` to `·`, so unfilled bar slots no longer outweigh the lit dots visually at low usage.
+  - Section dividers (`Context │ Usage`, `5h │ 7d`) are now uniformly dim, consistent across both joins.
+  - `display.contextValue: "percent"` now auto-appends `(used/total)` once context crosses 70%, so absolute headroom only takes screen real estate when it matters.
+- **Default config tightened.** The "minimal" look that previously required local overrides is now the out-of-the-box experience: `display.showModel`, `display.showProject`, `display.showTokenBreakdown`, and `gitStatus.enabled` all default to `false`. Color palette switched to the brand cyan/teal HEX set (`#09A5F7` family) used throughout the README screenshots.
+
 ## [0.2.0] - 2026-04-22
 
 ### Added

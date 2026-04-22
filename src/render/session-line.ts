@@ -3,7 +3,7 @@ import type { GradientConfig } from '../config.js';
 import { isLimitReached } from '../types.js';
 import { getContextPercent, getBufferedPercent, getModelName, getProviderLabel, getTotalTokens } from '../stdin.js';
 import { getOutputSpeed } from '../speed-tracker.js';
-import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, gradientText, quotaBar, custom as customColor } from './colors.js';
+import { coloredBar, critical, dim, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, gradientText, quotaBar, custom as customColor } from './colors.js';
 import { getAdaptiveBarWidth } from '../utils/terminal.js';
 
 const DEBUG = process.env.DEBUG?.includes('prism-hud') || process.env.DEBUG === '*';
@@ -149,7 +149,7 @@ export function renderSessionLine(ctx: RenderContext): string {
       const resetTime = ctx.usageData.fiveHour === 100
         ? formatResetTime(ctx.usageData.fiveHourResetAt)
         : formatResetTime(ctx.usageData.sevenDayResetAt);
-      parts.push(critical(`⚠ Limit reached${resetTime ? ` (resets ${resetTime})` : ''}`, colors));
+      parts.push(critical(`⚠ Limit reached${resetTime ? ` ↻${resetTime}` : ''}`, colors));
     } else {
       const usageThreshold = display?.usageThreshold ?? 0;
       const fiveHour = ctx.usageData.fiveHour;
@@ -167,7 +167,6 @@ export function renderSessionLine(ctx: RenderContext): string {
             gradient,
             usageBarEnabled,
             barWidth,
-            forceLabel: true,
           });
           parts.push(weeklyOnlyPart);
         } else {
@@ -192,7 +191,7 @@ export function renderSessionLine(ctx: RenderContext): string {
               usageBarEnabled,
               barWidth,
             });
-            parts.push(`${fiveHourPart} | ${sevenDayPart}`);
+            parts.push(`${fiveHourPart} ${dim('│')} ${sevenDayPart}`);
           } else {
             parts.push(fiveHourPart);
           }
@@ -281,14 +280,13 @@ function formatUsagePercent(percent: number | null, colors: RenderContext['confi
 }
 
 function formatUsageWindowPart({
-  label,
+  label: windowLabel,
   percent,
   resetAt,
   colors,
   gradient,
   usageBarEnabled,
   barWidth,
-  forceLabel = false,
 }: {
   label: '5h' | '7d';
   percent: number | null;
@@ -297,21 +295,17 @@ function formatUsageWindowPart({
   gradient?: GradientConfig;
   usageBarEnabled: boolean;
   barWidth: number;
-  forceLabel?: boolean;
 }): string {
   const usageDisplay = formatUsagePercent(percent, colors, barWidth, gradient);
   const reset = formatResetTime(resetAt);
+  const tag = label(windowLabel, colors);
+  const tail = reset ? ` ${label(`↻${reset}`, colors)}` : '';
 
   if (usageBarEnabled) {
-    const body = reset
-      ? `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay} (${reset} / ${label})`
-      : `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}`;
-    return forceLabel ? `${label}: ${body}` : body;
+    return `${tag} ${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}${tail}`;
   }
 
-  return reset
-    ? `${label}: ${usageDisplay} (${reset})`
-    : `${label}: ${usageDisplay}`;
+  return `${tag} ${usageDisplay}${tail}`;
 }
 
 function formatResetTime(resetAt: Date | null): string {
@@ -329,9 +323,9 @@ function formatResetTime(resetAt: Date | null): string {
   if (hours >= 24) {
     const days = Math.floor(hours / 24);
     const remHours = hours % 24;
-    if (remHours > 0) return `${days}d ${remHours}h`;
+    if (remHours > 0) return `${days}d${remHours}h`;
     return `${days}d`;
   }
 
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
 }

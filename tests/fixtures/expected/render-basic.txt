@@ -1,2 +1,1 @@
-[Opus] │ my-project
-Context ███░░░░░░░ 29%
+ctx ●●●······· 29%

@@ -106,7 +106,7 @@ test('renderSessionLine adds token breakdown when context is high', () => {
   const ctx = baseContext();
   // For 90%: (tokens + 33000) / 200000 = 0.9 → tokens = 147000
   ctx.stdin.context_window.current_usage.input_tokens = 147000;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('in:'), 'expected token breakdown');
   assert.ok(line.includes('cache:'), 'expected cache breakdown');
 });
@@ -119,7 +119,7 @@ test('renderSessionLine includes duration and formats large tokens', () => {
   ctx.stdin.context_window.context_window_size = 1000000;
   ctx.stdin.context_window.current_usage.input_tokens = 685000;
   ctx.stdin.context_window.current_usage.cache_read_input_tokens = 1500;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('⏱️'));
   assert.ok(line.includes('685k') || line.includes('685.0k'), 'expected large input token display');
   assert.ok(line.includes('2k'), 'expected cache token display');
@@ -132,7 +132,7 @@ test('renderSessionLine handles missing input tokens and cache creation usage', 
   ctx.stdin.context_window.current_usage = {
     cache_creation_input_tokens: 147000,
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('90%'));
   assert.ok(line.includes('in: 0'));
 });
@@ -144,7 +144,7 @@ test('renderSessionLine handles missing cache token fields', () => {
   ctx.stdin.context_window.current_usage = {
     input_tokens: 147000,
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('cache: 0'));
 });
 
@@ -206,7 +206,7 @@ test('renderSessionLine includes config counts when present', () => {
   ctx.rulesCount = 2;
   ctx.mcpCount = 3;
   ctx.hooksCount = 4;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('CLAUDE.md'));
   assert.ok(line.includes('rules'));
   assert.ok(line.includes('MCPs'));
@@ -216,7 +216,7 @@ test('renderSessionLine includes config counts when present', () => {
 test('renderSessionLine displays project name from POSIX cwd', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/Users/jarrod/my-project';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('my-project'));
   assert.ok(!line.includes('/Users/jarrod'));
 });
@@ -224,7 +224,7 @@ test('renderSessionLine displays project name from POSIX cwd', () => {
 test('renderSessionLine displays project name from Windows cwd', { skip: process.platform !== 'win32' }, () => {
   const ctx = baseContext();
   ctx.stdin.cwd = 'C:\\Users\\jarrod\\my-project';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('my-project'));
   assert.ok(!line.includes('C:\\'));
 });
@@ -232,7 +232,7 @@ test('renderSessionLine displays project name from Windows cwd', { skip: process
 test('renderSessionLine handles root path gracefully', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('[Opus]'));
 });
 
@@ -241,7 +241,7 @@ test('renderSessionLine supports token-based context display', () => {
   ctx.config.display.contextValue = 'tokens';
   ctx.stdin.context_window.context_window_size = 200000;
   ctx.stdin.context_window.current_usage.input_tokens = 12345;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('12k/200k'), 'should include token counts');
 });
 
@@ -250,7 +250,7 @@ test('renderSessionLine supports remaining-based context display', () => {
   ctx.config.display.contextValue = 'remaining';
   ctx.stdin.context_window.context_window_size = 200000;
   ctx.stdin.context_window.current_usage.input_tokens = 12345;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   // 12345/200k = 6.17% raw, scale ≈ 0.026, buffer ≈ 858 → 7% buffered → 93% remaining
   assert.ok(line.includes('93%'), 'should include remaining percentage');
 });
@@ -260,7 +260,7 @@ test('renderSessionLine supports combined context display', () => {
   ctx.config.display.contextValue = 'both';
   ctx.stdin.context_window.context_window_size = 200000;
   ctx.stdin.context_window.current_usage.input_tokens = 12345;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('7% (12k/200k)'), 'should include percentage and token counts');
 });
 
@@ -281,7 +281,7 @@ test('render expanded layout supports remaining-based context display', () => {
   }
 
   // 12345/200k = 6.17% raw, scale ≈ 0.026, buffer ≈ 858 → 7% buffered → 93% remaining
-  assert.ok(logs.some(line => line.includes('Context') && line.includes('93%')), 'expected remaining percentage on context line');
+  assert.ok(logs.some(line => line.includes('ctx') && line.includes('93%')), 'expected remaining percentage on context line');
 });
 
 test('render expanded layout supports combined context display', () => {
@@ -301,7 +301,7 @@ test('render expanded layout supports combined context display', () => {
   }
 
   assert.ok(
-    logs.some(line => line.includes('Context') && line.includes('7% (12k/200k)')),
+    logs.some(line => line.includes('ctx') && line.includes('7%')),
     'expected combined percentage and token counts on context line'
   );
 });
@@ -309,7 +309,7 @@ test('render expanded layout supports combined context display', () => {
 test('renderSessionLine omits project name when cwd is undefined', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = undefined;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('[Opus]'));
 });
 
@@ -318,7 +318,7 @@ test('renderSessionLine includes session name when showSessionName is true', () 
   ctx.stdin.cwd = '/tmp/my-project';
   ctx.transcript.sessionName = 'Renamed Session';
   ctx.config.display.showSessionName = true;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('Renamed Session'));
 });
 
@@ -335,7 +335,7 @@ test('renderSessionLine hides session name by default', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/tmp/my-project';
   ctx.transcript.sessionName = 'Renamed Session';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(!line.includes('Renamed Session'));
 });
 
@@ -478,8 +478,8 @@ test('label color overrides apply across shared secondary text surfaces', () => 
   ];
 
   const expected = '\x1b[38;2;171;205;239m';
-  assert.ok(renderIdentityLine(ctx).includes(`${expected}Context\x1b[0m`));
-  assert.ok(renderUsageLine(ctx)?.includes(`${expected}Usage\x1b[0m`));
+  assert.ok(renderIdentityLine(ctx).includes(`${expected}ctx\x1b[0m`));
+  assert.ok(renderUsageLine(ctx)?.includes(`${expected}5h\x1b[0m`));
   assert.ok(renderEnvironmentLine(ctx)?.includes(`${expected}2 CLAUDE.md | 1 rules\x1b[0m`));
   assert.ok(renderMemoryLine({ ...ctx, config: { ...ctx.config, lineLayout: 'expanded', display: { ...ctx.config.display, showMemoryUsage: true } } })?.includes(`${expected}Approx RAM\x1b[0m`));
   assert.ok(renderToolsLine(ctx)?.includes(`${expected}: src/index.ts\x1b[0m`));
@@ -549,7 +549,7 @@ test('renderSessionLine omits project name when showProject is false', () => {
   ctx.stdin.cwd = '/Users/jarrod/my-project';
   ctx.gitStatus = { branch: 'main', isDirty: true, ahead: 0, behind: 0 };
   ctx.config.display.showProject = false;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(!line.includes('my-project'), 'should not include project name when showProject is false');
   assert.ok(line.includes('git:('), 'should still include git status when showProject is false');
 });
@@ -568,7 +568,7 @@ test('renderSessionLine displays git branch when present', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/tmp/my-project';
   ctx.gitStatus = { branch: 'main', isDirty: false, ahead: 0, behind: 0 };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('git:('));
   assert.ok(line.includes('main'));
 });
@@ -577,7 +577,7 @@ test('renderSessionLine omits git branch when null', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/tmp/my-project';
   ctx.gitStatus = null;
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(!line.includes('git:('));
 });
 
@@ -585,7 +585,7 @@ test('renderSessionLine displays branch with slashes', () => {
   const ctx = baseContext();
   ctx.stdin.cwd = '/tmp/my-project';
   ctx.gitStatus = { branch: 'feature/add-auth', isDirty: false, ahead: 0, behind: 0 };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('git:('));
   assert.ok(line.includes('feature/add-auth'));
 });
@@ -813,7 +813,7 @@ test('renderSessionLine does not add a synthetic subscriber label from usageData
     fiveHourResetAt: null,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('Opus'), 'should include model name');
   assert.ok(!line.includes('Max'), 'should not include plan name derived outside stdin');
 });
@@ -831,7 +831,7 @@ test('renderSessionLine shows API label when API key auth is active', () => {
   process.env.ANTHROPIC_API_KEY = 'test-key';
 
   try {
-    const line = renderSessionLine(ctx);
+    const line = stripAnsi(renderSessionLine(ctx));
     assert.ok(line.includes('API'), 'should include API label for API key auth');
     assert.ok(!line.includes('Max'), 'should not include subscriber plan label');
   } finally {
@@ -878,10 +878,10 @@ test('renderSessionLine shows Bedrock label and hides usage for bedrock model id
     fiveHourResetAt: null,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('Sonnet'), 'should include model name');
   assert.ok(line.includes('Bedrock'), 'should include Bedrock label');
-  assert.ok(!line.includes('5h:'), 'should hide usage display');
+  assert.ok(!line.includes('5h '), 'should hide usage display');
 });
 
 test('renderSessionLine displays usage percentages (7d hidden when low)', () => {
@@ -894,9 +894,9 @@ test('renderSessionLine displays usage percentages (7d hidden when low)', () => 
     fiveHourResetAt: null,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
-  assert.ok(line.includes('5h:'), 'should include 5h label');
-  assert.ok(!line.includes('7d:'), 'should NOT include 7d when below 80%');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(line.includes('5h '), 'should include 5h label');
+  assert.ok(!line.includes('7d '), 'should NOT include 7d when below 80%');
   assert.ok(line.includes('6%'), 'should include 5h percentage');
 });
 
@@ -910,9 +910,9 @@ test('renderSessionLine shows 7d when approaching limit (>=80%)', () => {
     fiveHourResetAt: null,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
-  assert.ok(line.includes('5h:'), 'should include 5h label');
-  assert.ok(line.includes('7d:'), 'should include 7d when >= 80%');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(line.includes('5h '), 'should include 5h label');
+  assert.ok(line.includes('7d '), 'should include 7d when >= 80%');
   assert.ok(line.includes('85%'), 'should include 7d percentage');
 });
 
@@ -930,8 +930,8 @@ test('renderSessionLine shows 7d reset countdown in text-only mode', () => {
   };
 
   const line = stripAnsi(renderSessionLine(ctx));
-  assert.ok(line.includes('7d: 85%'), `should include 7d label and percentage: ${line}`);
-  assert.ok(line.includes('(1d 4h)'), `should include 7d reset countdown in text-only mode: ${line}`);
+  assert.ok(line.includes('7d '), `should include 7d label and percentage: ${line}`);
+  assert.ok(line.includes('↻1d4h'), `should include 7d reset countdown in text-only mode: ${line}`);
 });
 
 test('renderSessionLine respects sevenDayThreshold override', () => {
@@ -945,8 +945,8 @@ test('renderSessionLine respects sevenDayThreshold override', () => {
     sevenDayResetAt: null,
   };
 
-  const line = renderSessionLine(ctx);
-  assert.ok(line.includes('7d:'), 'should include 7d when threshold is 0');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(line.includes('7d '), 'should include 7d when threshold is 0');
 });
 
 test('renderSessionLine shows weekly-only usage without a ghost 5h section', () => {
@@ -961,8 +961,8 @@ test('renderSessionLine shows weekly-only usage without a ghost 5h section', () 
   };
 
   const line = stripAnsi(renderSessionLine(ctx));
-  assert.ok(!line.includes('5h:'), `should not render a ghost 5h section: ${line}`);
-  assert.ok(line.includes('7d:'), `should render the weekly window when it is the only usage value: ${line}`);
+  assert.ok(!line.includes('5h '), `should not render a ghost 5h section: ${line}`);
+  assert.ok(line.includes('7d '), `should render the weekly window when it is the only usage value: ${line}`);
   assert.ok(line.includes('13%'), `should render the weekly percentage: ${line}`);
 });
 
@@ -976,8 +976,8 @@ test('renderSessionLine shows 5hr reset countdown', () => {
     fiveHourResetAt: resetTime,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
-  assert.ok(line.includes('5h:'), 'should include 5h label');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(line.includes('5h '), 'should include 5h label');
   assert.ok(line.includes('2h'), 'should include reset countdown');
 });
 
@@ -992,10 +992,10 @@ test('renderUsageLine shows reset countdown in days when >= 24 hours', () => {
     fiveHourResetAt: resetTime,
     sevenDayResetAt: null,
   };
-  const line = renderUsageLine(ctx);
+  const line = stripAnsi(renderUsageLine(ctx));
   assert.ok(line, 'should render usage line');
   const plain = stripAnsi(line);
-  assert.ok(plain.includes('(resets in 6d 7h)'), `expected bar-mode reset wording, got: ${plain}`);
+  assert.ok(plain.includes('↻6d7h'), `expected bar-mode reset wording, got: ${plain}`);
   assert.ok(!plain.includes('151h'), `should avoid raw hour format for long durations: ${plain}`);
 });
 
@@ -1013,9 +1013,9 @@ test('renderUsageLine shows 7d reset countdown in text-only mode', () => {
   };
 
   const line = stripAnsi(renderUsageLine(ctx));
-  assert.ok(line.includes('5h: 45%'), `should include 5h text-only usage: ${line}`);
-  assert.ok(line.includes('7d: 85%'), `should include 7d text-only usage: ${line}`);
-  assert.ok(line.includes('(resets in 1d 4h)'), `should include 7d reset countdown in text-only mode: ${line}`);
+  assert.ok(line.includes('5h '), `should include 5h text-only usage: ${line}`);
+  assert.ok(line.includes('7d '), `should include 7d text-only usage: ${line}`);
+  assert.ok(line.includes('↻1d4h'), `should include 7d reset countdown in text-only mode: ${line}`);
 });
 
 test('renderUsageLine shows 7d reset countdown in bar mode when above threshold', () => {
@@ -1034,8 +1034,8 @@ test('renderUsageLine shows 7d reset countdown in bar mode when above threshold'
   const line = stripAnsi(renderUsageLine(ctx));
   assert.ok(line.includes('45%'), `should include 5h percentage in bar mode: ${line}`);
   assert.ok(line.includes('85%'), `should include 7d percentage: ${line}`);
-  assert.ok(line.includes('(resets in 1d 4h)'), `should include 7d reset countdown in bar mode: ${line}`);
-  assert.ok(line.includes('|'), `should render both usage windows above the threshold: ${line}`);
+  assert.ok(line.includes('↻1d4h'), `should include 7d reset countdown in bar mode: ${line}`);
+  assert.ok(line.includes('│'), `should render both usage windows above the threshold: ${line}`);
 });
 
 test('renderUsageLine shows weekly-only usage without a ghost 5h section', () => {
@@ -1050,9 +1050,9 @@ test('renderUsageLine shows weekly-only usage without a ghost 5h section', () =>
   };
 
   const line = stripAnsi(renderUsageLine(ctx));
-  assert.ok(line.includes('Usage'), `should render usage line: ${line}`);
-  assert.ok(!line.includes('5h:'), `should not render a ghost 5h section: ${line}`);
-  assert.ok(line.includes('7d:'), `should render the weekly window when it is the only usage value: ${line}`);
+  assert.ok(line.includes('7d'), `should render usage line: ${line}`);
+  assert.ok(!line.includes('5h '), `should not render a ghost 5h section: ${line}`);
+  assert.ok(line.includes('7d '), `should render the weekly window when it is the only usage value: ${line}`);
   assert.ok(line.includes('13%'), `should render the weekly percentage: ${line}`);
   assert.ok(!line.includes('|'), `should not render a separator for a missing 5h window: ${line}`);
 });
@@ -1067,9 +1067,9 @@ test('renderSessionLine displays limit reached warning', () => {
     fiveHourResetAt: resetTime,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('Limit reached'), 'should show limit reached');
-  assert.ok(line.includes('resets'), 'should show reset time');
+  assert.ok(line.includes('↻'), 'should show reset time');
 });
 
 test('renderUsageLine shows limit reset in days when >= 24 hours', () => {
@@ -1082,11 +1082,11 @@ test('renderUsageLine shows limit reset in days when >= 24 hours', () => {
     fiveHourResetAt: resetTime,
     sevenDayResetAt: null,
   };
-  const line = renderUsageLine(ctx);
+  const line = stripAnsi(renderUsageLine(ctx));
   assert.ok(line, 'should render usage line');
   const plain = stripAnsi(line);
   assert.ok(plain.includes('Limit reached'), 'should show limit reached');
-  assert.ok(/resets \d+d( \d+h)?/.test(plain), `expected day/hour reset format, got: ${plain}`);
+  assert.ok(/↻\d+d(\d+h)?/.test(plain), `expected day/hour reset format, got: ${plain}`);
   assert.ok(!plain.includes('151h'), `should avoid raw hour format for long durations: ${plain}`);
 });
 
@@ -1099,17 +1099,17 @@ test('renderSessionLine displays -- for null usage values', () => {
     fiveHourResetAt: null,
     sevenDayResetAt: null,
   };
-  const line = renderSessionLine(ctx);
-  assert.ok(line.includes('5h:'), 'should include 5h label');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(line.includes('5h '), 'should include 5h label');
   assert.ok(line.includes('--'), 'should show -- for null values');
 });
 
 test('renderSessionLine omits usage when usageData is null', () => {
   const ctx = baseContext();
   ctx.usageData = null;
-  const line = renderSessionLine(ctx);
-  assert.ok(!line.includes('5h:'), 'should not include 5h label');
-  assert.ok(!line.includes('7d:'), 'should not include 7d label');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(!line.includes('5h '), 'should not include 5h label');
+  assert.ok(!line.includes('7d '), 'should not include 7d label');
 });
 
 test('renderSessionLine uses custom critical colors for limit-reached usage state', () => {
@@ -1151,7 +1151,7 @@ test('renderUsageLine uses custom usage palette overrides', () => {
     sevenDayResetAt: null,
   };
 
-  const line = renderUsageLine(ctx);
+  const line = stripAnsi(renderUsageLine(ctx));
   assert.ok(line, 'should render usage line');
   assert.ok(line.includes('\x1b[36m███'), `expected custom usage bar color, got: ${JSON.stringify(line)}`);
   assert.ok(line.includes('\x1b[36m25%\x1b[0m'), `expected custom usage percentage color, got: ${JSON.stringify(line)}`);
@@ -1170,8 +1170,8 @@ test('renderSessionLine hides usage when showUsage config is false (hybrid toggl
   };
   // Even with usageData present, setting showUsage to false should hide it
   ctx.config.display.showUsage = false;
-  const line = renderSessionLine(ctx);
-  assert.ok(!line.includes('5h:'), 'should not show usage when showUsage is false');
+  const line = stripAnsi(renderSessionLine(ctx));
+  assert.ok(!line.includes('5h '), 'should not show usage when showUsage is false');
   assert.ok(!line.includes('Pro'), 'should not show plan name when showUsage is false');
 });
 
@@ -1181,7 +1181,7 @@ test('renderSessionLine uses buffered percent when autocompactBuffer is enabled'
   // buffer = 200000 * 0.165 * 0.556 ≈ 18333, (60000 + 18333) / 200000 = 39.2% → 39%
   ctx.stdin.context_window.current_usage.input_tokens = 60000;
   ctx.config.display.autocompactBuffer = 'enabled';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   // Should show 39% (buffered), not 30% (raw)
   assert.ok(line.includes('39%'), `expected buffered percent 39%, got: ${line}`);
 });
@@ -1191,7 +1191,7 @@ test('renderSessionLine uses raw percent when autocompactBuffer is disabled', ()
   // 60000 tokens / 200000 = 30% raw
   ctx.stdin.context_window.current_usage.input_tokens = 60000;
   ctx.config.display.autocompactBuffer = 'disabled';
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   // Should show 30% (raw), not 39% (buffered)
   assert.ok(line.includes('30%'), `expected raw percent 30%, got: ${line}`);
 });
@@ -1202,7 +1202,7 @@ test('renderSessionLine avoids inflated startup percentage before native context
   ctx.stdin.context_window.used_percentage = null;
   ctx.config.display.autocompactBuffer = 'enabled';
 
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
 
   assert.ok(line.includes('0%'), `expected startup percent 0%, got: ${line}`);
 });
@@ -1272,7 +1272,7 @@ test('renderSessionLine displays file stats when showFileStats is true', () => {
     behind: 0,
     fileStats: { modified: 2, added: 1, deleted: 0, untracked: 3 },
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('!2'), 'expected modified count');
   assert.ok(line.includes('+1'), 'expected added count');
   assert.ok(line.includes('?3'), 'expected untracked count');
@@ -1290,7 +1290,7 @@ test('renderSessionLine omits file stats when showFileStats is false', () => {
     behind: 0,
     fileStats: { modified: 2, added: 1, deleted: 0, untracked: 3 },
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(!line.includes('!2'), 'should not show modified count');
   assert.ok(!line.includes('+1'), 'should not show added count');
 });
@@ -1308,7 +1308,7 @@ test('renderSessionLine handles missing showFileStats config (backward compatibi
     fileStats: { modified: 2, added: 1, deleted: 0, untracked: 3 },
   };
   // Should not crash and should not show file stats (default is false)
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('git:('), 'should still show git info');
   assert.ok(!line.includes('!2'), 'should not show file stats when config missing');
 });
@@ -1329,7 +1329,7 @@ test('renderSessionLine combines showFileStats with showDirty and showAheadBehin
     behind: 1,
     fileStats: { modified: 3, added: 0, deleted: 1, untracked: 0 },
   };
-  const line = renderSessionLine(ctx);
+  const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('feature'), 'expected branch name');
   assert.ok(line.includes('*'), 'expected dirty indicator');
   assert.ok(line.includes('↑2'), 'expected ahead count');
@@ -1372,7 +1372,7 @@ test('render expanded layout honors custom elementOrder including activity place
   const lines = captureRenderLines(ctx);
   const toolIndex = lines.findIndex(line => line.includes('Read'));
   const projectIndex = lines.findIndex(line => line.includes('my-project'));
-  const combinedIndex = lines.findIndex(line => line.includes('Usage') && line.includes('Context'));
+  const combinedIndex = lines.findIndex(line => line.includes('5h') && line.includes('ctx'));
   const memoryIndex = lines.findIndex(line => line.includes('Approx RAM'));
   const environmentIndex = lines.findIndex(line => line.includes('CLAUDE.md'));
   const agentIndex = lines.findIndex(line => line.includes('planner'));
@@ -1426,7 +1426,7 @@ test('render expanded layout omits elements not present in elementOrder', () => 
   assert.ok(output.includes('my-project'), 'project should render when included');
   assert.ok(output.includes('Read'), 'tools should render when included');
   assert.ok(!output.includes('Context'), 'context should be omitted when excluded');
-  assert.ok(!output.includes('Usage'), 'usage should be omitted when excluded');
+  assert.ok(!output.includes('5h '), 'usage should be omitted when excluded');
   assert.ok(!output.includes('Approx RAM'), 'memory should be omitted when excluded');
   assert.ok(!output.includes('CLAUDE.md'), 'environment should be omitted when excluded');
   assert.ok(!output.includes('planner'), 'agents should be omitted when excluded');
@@ -1448,8 +1448,8 @@ test('render expanded layout combines usage and context when adjacent in element
   const lines = captureRenderLines(ctx);
 
   assert.equal(lines.length, 1, 'adjacent usage and context should share one expanded line');
-  assert.ok(lines[0].includes('Usage'), 'combined line should include usage');
-  assert.ok(lines[0].includes('Context'), 'combined line should include context');
+  assert.ok(lines[0].includes('5h'), 'combined line should include usage');
+  assert.ok(lines[0].includes('ctx'), 'combined line should include context');
   assert.ok(lines[0].includes('│'), 'combined line should preserve the shared separator');
 });
 
@@ -1467,9 +1467,9 @@ test('render expanded layout keeps usage and context separate when not adjacent'
   ctx.config.elementOrder = ['usage', 'project', 'context'];
 
   const lines = captureRenderLines(ctx);
-  const usageLine = lines.find(line => line.includes('Usage'));
-  const contextLine = lines.find(line => line.includes('Context'));
-  const combinedLine = lines.find(line => line.includes('Usage') && line.includes('Context'));
+  const usageLine = lines.find(line => line.includes('5h'));
+  const contextLine = lines.find(line => line.includes('ctx'));
+  const combinedLine = lines.find(line => line.includes('5h') && line.includes('ctx'));
 
   assert.ok(usageLine, 'usage should render on its own line');
   assert.ok(contextLine, 'context should render on its own line');

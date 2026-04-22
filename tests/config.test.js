@@ -268,17 +268,17 @@ test('mergeConfig falls back to default when elementOrder is empty or invalid', 
 
 test('mergeConfig defaults colors to expected semantic palette', () => {
   const config = mergeConfig({});
-  assert.equal(config.colors.context, 'green');
-  assert.equal(config.colors.usage, 'brightBlue');
-  assert.equal(config.colors.warning, 'yellow');
-  assert.equal(config.colors.usageWarning, 'brightMagenta');
-  assert.equal(config.colors.critical, 'red');
-  assert.equal(config.colors.model, 'cyan');
-  assert.equal(config.colors.project, 'yellow');
-  assert.equal(config.colors.git, 'magenta');
-  assert.equal(config.colors.gitBranch, 'cyan');
-  assert.equal(config.colors.label, 'dim');
-  assert.equal(config.colors.custom, 208);
+  assert.equal(config.colors.context, '#09A5F7');
+  assert.equal(config.colors.usage, '#00D4A8');
+  assert.equal(config.colors.warning, '#FFB300');
+  assert.equal(config.colors.usageWarning, '#FF6B35');
+  assert.equal(config.colors.critical, '#FF3D00');
+  assert.equal(config.colors.model, '#4FC3F7');
+  assert.equal(config.colors.project, '#29B6F6');
+  assert.equal(config.colors.git, '#AB47BC');
+  assert.equal(config.colors.gitBranch, '#26C6DA');
+  assert.equal(config.colors.label, '#78909C');
+  assert.equal(config.colors.custom, '#7C4DFF');
 });
 
 test('mergeConfig accepts valid color overrides and filters invalid values', () => {
