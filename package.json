@@ -1,0 +1,45 @@
+{
+  "name": "prism-hud",
+  "version": "0.1.0",
+  "description": "Claude Code statusline HUD with a per-position gradient progress bar. Forked from jarrodwatts/claude-hud.",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "src/",
+    "commands/",
+    ".claude-plugin/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "npm run build && node --test",
+    "test:coverage": "npm run build && c8 --reporter=text --reporter=lcov node --test",
+    "test:update-snapshots": "UPDATE_SNAPSHOTS=1 npm test",
+    "test:stdin": "npm run build && echo '{\"model\":{\"display_name\":\"Opus\"},\"context_window\":{\"current_usage\":{\"input_tokens\":45000},\"context_window_size\":200000},\"transcript_path\":\"/tmp/test.jsonl\"}' | node dist/index.js"
+  },
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "hud",
+    "gradient"
+  ],
+  "author": "jiefeng.wang <jiefeng.wang@outlook.com>",
+  "contributors": [
+    "Jarrod Watts (original claude-hud author)"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/puddinging/prism-hud",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/puddinging/prism-hud.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "c8": "^11.0.0",
+    "typescript": "^5.0.0"
+  }
+}

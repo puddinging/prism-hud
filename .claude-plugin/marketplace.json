@@ -1,0 +1,20 @@
+{
+  "name": "prism-hud",
+  "owner": {
+    "name": "jiefeng.wang",
+    "email": "jiefeng.wang@outlook.com"
+  },
+  "metadata": {
+    "description": "Claude Code statusline HUD with a per-position gradient progress bar. Forked from jarrodwatts/claude-hud.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "prism-hud",
+      "source": "./",
+      "description": "Statusline HUD with a per-position gradient progress bar (cool blue → warm red). Each dot shows its own color; the warmer colors only appear when the bar is near full, so tension is visible at a glance.",
+      "category": "monitoring",
+      "tags": ["hud", "statusline", "monitoring", "context", "tools", "agents", "todos", "gradient"]
+    }
+  ]
+}
