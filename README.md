@@ -11,20 +11,20 @@ A Claude Code statusline HUD with a **per-position gradient progress bar** — e
 
 ## Gradient palette (10 steps)
 
-| Pos | Hex | Tailwind stop | Semantic |
+| Pos | Hex | Material stop | Semantic |
 |-----|-----|---------------|----------|
-| 1 | `#10B981` | emerald-500 | safe |
-| 2 | `#22C55E` | green-500 | |
-| 3 | `#84CC16` | lime-500 | |
-| 4 | `#A3E635` | lime-400 | |
-| 5 | `#EAB308` | yellow-500 | caution |
-| 6 | `#F59E0B` | amber-500 | |
-| 7 | `#F97316` | orange-500 | |
-| 8 | `#EA580C` | orange-600 | |
-| 9 | `#EF4444` | red-500 | danger |
-| 10 | `#DC2626` | red-600 | critical |
+| 1 | `#00E676` | green A400 | safe |
+| 2 | `#3DEE4A` | interpolated | |
+| 3 | `#76FF03` | light-green A400 | |
+| 4 | `#C6FF00` | lime A400 | |
+| 5 | `#FFEA00` | yellow A400 | caution |
+| 6 | `#FFC400` | amber A400 | |
+| 7 | `#FF9100` | orange A400 | |
+| 8 | `#FF6D00` | orange A700 | |
+| 9 | `#FF3D00` | deep-orange A400 | danger |
+| 10 | `#FF1744` | red A400 | critical |
 
-Follows the industry convention for progress / health indicators (green = safe, yellow = caution, red = danger), using Tailwind's semantic 400-600 stops.
+Follows the progress-bar convention (green = safe, yellow = caution, red = danger) while keeping the high-saturation / high-brightness "electric" feel of Material Design's Accent (A-series) palette — same family as the reference color `#09A5F7` that shaped this plugin's visual identity.
 
 ## Install
 

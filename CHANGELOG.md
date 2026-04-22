@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.1.3] - 2026-04-22
+
+### Changed
+
+- **Gradient palette upgraded from Tailwind 500 to Material Design Accent (A-series).** 0.1.2 used Tailwind's semantic 500 stops, which read as "flat UI muted" rather than the electric/neon/saturated style that shaped this plugin's visual identity (see the reference color `#09A5F7`). All 10 stops are now Material Accent A400/A700 values: same green → yellow → red traffic-light convention, but with ~90% saturation and uniform ~50% brightness, so each dot reads vivid and luminous instead of subdued.
+
 ## [0.1.2] - 2026-04-22
 
 ### Changed
