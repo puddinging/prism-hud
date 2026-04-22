@@ -2,7 +2,7 @@ import type { RenderContext } from '../../types.js';
 import type { GradientConfig } from '../../config.js';
 import { isLimitReached } from '../../types.js';
 import { getProviderLabel } from '../../stdin.js';
-import { critical, label, getGradientTextColor, quotaBar, RESET } from '../colors.js';
+import { critical, dim, label, gradientText, quotaBar } from '../colors.js';
 import { getAdaptiveBarWidth } from '../../utils/terminal.js';
 
 export function renderUsageLine(ctx: RenderContext): string | null {
@@ -22,13 +22,11 @@ export function renderUsageLine(ctx: RenderContext): string | null {
     return null;
   }
 
-  const usageLabel = label('Usage', colors);
-
   if (isLimitReached(ctx.usageData)) {
     const resetTime = ctx.usageData.fiveHour === 100
       ? formatResetTime(ctx.usageData.fiveHourResetAt)
       : formatResetTime(ctx.usageData.sevenDayResetAt);
-    return `${usageLabel} ${critical(`⚠ Limit reached${resetTime ? ` (resets ${resetTime})` : ''}`, colors)}`;
+    return critical(`⚠ Limit reached${resetTime ? ` ↻${resetTime}` : ''}`, colors);
   }
 
   const threshold = display?.usageThreshold ?? 0;
@@ -45,7 +43,7 @@ export function renderUsageLine(ctx: RenderContext): string | null {
   const barWidth = getAdaptiveBarWidth();
 
   if (fiveHour === null && sevenDay !== null) {
-    const weeklyOnlyPart = formatUsageWindowPart({
+    return formatUsageWindowPart({
       label: '7d',
       percent: sevenDay,
       resetAt: ctx.usageData.sevenDayResetAt,
@@ -53,9 +51,7 @@ export function renderUsageLine(ctx: RenderContext): string | null {
       gradient,
       usageBarEnabled,
       barWidth,
-      forceLabel: true,
     });
-    return `${usageLabel} ${weeklyOnlyPart}`;
   }
 
   const fiveHourPart = formatUsageWindowPart({
@@ -78,29 +74,27 @@ export function renderUsageLine(ctx: RenderContext): string | null {
       usageBarEnabled,
       barWidth,
     });
-    return `${usageLabel} ${fiveHourPart} | ${sevenDayPart}`;
+    return `${fiveHourPart} ${dim('│')} ${sevenDayPart}`;
   }
 
-  return `${usageLabel} ${fiveHourPart}`;
+  return fiveHourPart;
 }
 
 function formatUsagePercent(percent: number | null, colors: RenderContext['config']['colors'] | undefined, width: number, gradient: GradientConfig | undefined): string {
   if (percent === null) {
     return label('--', colors);
   }
-  const color = getGradientTextColor(percent, width, gradient);
-  return `${color}${percent}%${RESET}`;
+  return gradientText(`${percent}%`, percent, width, gradient);
 }
 
 function formatUsageWindowPart({
-  label,
+  label: windowLabel,
   percent,
   resetAt,
   colors,
   gradient,
   usageBarEnabled,
   barWidth,
-  forceLabel = false,
 }: {
   label: '5h' | '7d';
   percent: number | null;
@@ -109,21 +103,17 @@ function formatUsageWindowPart({
   gradient?: GradientConfig;
   usageBarEnabled: boolean;
   barWidth: number;
-  forceLabel?: boolean;
 }): string {
   const usageDisplay = formatUsagePercent(percent, colors, barWidth, gradient);
   const reset = formatResetTime(resetAt);
+  const tag = label(windowLabel, colors);
+  const tail = reset ? ` ${label(`↻${reset}`, colors)}` : '';
 
   if (usageBarEnabled) {
-    const body = reset
-      ? `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay} (resets in ${reset})`
-      : `${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}`;
-    return forceLabel ? `${label}: ${body}` : body;
+    return `${tag} ${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}${tail}`;
   }
 
-  return reset
-    ? `${label}: ${usageDisplay} (resets in ${reset})`
-    : `${label}: ${usageDisplay}`;
+  return `${tag} ${usageDisplay}${tail}`;
 }
 
 function formatResetTime(resetAt: Date | null): string {
@@ -141,9 +131,9 @@ function formatResetTime(resetAt: Date | null): string {
   if (hours >= 24) {
     const days = Math.floor(hours / 24);
     const remHours = hours % 24;
-    if (remHours > 0) return `${days}d ${remHours}h`;
+    if (remHours > 0) return `${days}d${remHours}h`;
     return `${days}d`;
   }
 
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
 }

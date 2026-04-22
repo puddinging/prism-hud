@@ -3,7 +3,7 @@ import type { GradientConfig } from '../config.js';
 import { isLimitReached } from '../types.js';
 import { getContextPercent, getBufferedPercent, getModelName, getProviderLabel, getTotalTokens } from '../stdin.js';
 import { getOutputSpeed } from '../speed-tracker.js';
-import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, getGradientTextColor, quotaBar, custom as customColor, RESET } from './colors.js';
+import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, gradientText, quotaBar, custom as customColor } from './colors.js';
 import { getAdaptiveBarWidth } from '../utils/terminal.js';
 
 const DEBUG = process.env.DEBUG?.includes('prism-hud') || process.env.DEBUG === '*';
@@ -33,7 +33,7 @@ export function renderSessionLine(ctx: RenderContext): string {
   const display = ctx.config?.display;
   const contextValueMode = display?.contextValue ?? 'percent';
   const contextValue = formatContextValue(ctx, percent, contextValueMode);
-  const contextValueDisplay = `${getGradientTextColor(percent, barWidth, gradient)}${contextValue}${RESET}`;
+  const contextValueDisplay = gradientText(contextValue, percent, barWidth, gradient);
 
   // Model and context bar (FIRST)
   const providerLabel = getProviderLabel(ctx.stdin);
@@ -277,8 +277,7 @@ function formatUsagePercent(percent: number | null, colors: RenderContext['confi
   if (percent === null) {
     return label('--', colors);
   }
-  const color = getGradientTextColor(percent, width, gradient);
-  return `${color}${percent}%${RESET}`;
+  return gradientText(`${percent}%`, percent, width, gradient);
 }
 
 function formatUsageWindowPart({

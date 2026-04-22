@@ -160,6 +160,77 @@ export function getGradientTextColor(percent: number, width: number = 10, gradie
   return gradientColorAt(filled - 1, safeWidth, palette);
 }
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+/**
+ * Sample a color at a continuous palette position (0..palette.length-1),
+ * linearly interpolating in RGB space between adjacent stops.
+ */
+function sampleGradientAnsi(palette: string[], position: number): string {
+  if (palette.length === 0) return '';
+  if (palette.length === 1) return hexToAnsi(palette[0]);
+  const clamped = Math.max(0, Math.min(palette.length - 1, position));
+  const lo = Math.floor(clamped);
+  const hi = Math.min(palette.length - 1, lo + 1);
+  if (lo === hi) return hexToAnsi(palette[lo]);
+  const t = clamped - lo;
+  const a = hexToRgb(palette[lo]);
+  const b = hexToRgb(palette[hi]);
+  const r = Math.round(a.r + (b.r - a.r) * t);
+  const g = Math.round(a.g + (b.g - a.g) * t);
+  const bl = Math.round(a.b + (b.b - a.b) * t);
+  return `\x1b[38;2;${r};${g};${bl}m`;
+}
+
+/**
+ * Colors `text` with a gradient built from the *actual colors of the filled
+ * bar dots*, in left-to-right order. Text characters interpolate continuously
+ * between those colors. If only one dot is filled, the text is that single
+ * color (no gradient — that's fine).
+ */
+export function gradientText(
+  text: string,
+  percent: number,
+  width: number,
+  gradient: GradientConfig = DEFAULT_GRADIENT,
+): string {
+  const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
+  const chars = Array.from(text);
+  if (chars.length === 0) return '';
+
+  const safeWidth = Number.isFinite(width) ? Math.max(1, Math.round(width)) : 10;
+  const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+  const filled = Math.max(1, Math.round((safePercent / 100) * safeWidth));
+
+  const subPalette: string[] = [];
+  for (let i = 0; i < filled; i++) {
+    const idx = palette.length === 1 || safeWidth === 1
+      ? 0
+      : Math.round((i / (safeWidth - 1)) * (palette.length - 1));
+    subPalette.push(palette[Math.min(palette.length - 1, Math.max(0, idx))]);
+  }
+
+  let result = '';
+  let prevAnsi = '';
+  for (let i = 0; i < chars.length; i++) {
+    const t = chars.length === 1 ? 0 : i / (chars.length - 1);
+    const position = t * Math.max(0, subPalette.length - 1);
+    const ansi = sampleGradientAnsi(subPalette, position);
+    if (ansi !== prevAnsi) {
+      result += ansi;
+      prevAnsi = ansi;
+    }
+    result += chars[i];
+  }
+  return result + RESET;
+}
+
 export function gradientBar(percent: number, width: number = 10, gradient: GradientConfig = DEFAULT_GRADIENT): string {
   const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
   const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;

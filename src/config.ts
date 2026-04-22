@@ -162,7 +162,7 @@ export const DEFAULT_CONFIG: HudConfig = {
       '#FF1744',
     ],
     filledChar: '●',
-    emptyChar: '○',
+    emptyChar: '·',
     emptyColor: '#7D7A72',
   },
 };

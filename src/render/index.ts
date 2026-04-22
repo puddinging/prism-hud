@@ -392,7 +392,7 @@ function renderExpanded(ctx: RenderContext): Array<{ line: string; isActivity: b
       const secondLine = renderElementLine(ctx, nextElement);
 
       if (firstLine && secondLine) {
-        lines.push({ line: `${firstLine} │ ${secondLine}`, isActivity: false });
+        lines.push({ line: `${firstLine} ${dim('│')} ${secondLine}`, isActivity: false });
       } else if (firstLine) {
         lines.push({ line: firstLine, isActivity: false });
       } else if (secondLine) {

@@ -24,8 +24,8 @@ export function renderIdentityLine(ctx: RenderContext): string {
   const contextValueDisplay = `${getGradientTextColor(percent, barWidth, gradient)}${contextValue}${RESET}`;
 
   let line = display?.showContextBar !== false
-    ? `${label('Context', colors)} ${coloredBar(percent, barWidth, gradient)} ${contextValueDisplay}`
-    : `${label('Context', colors)} ${contextValueDisplay}`;
+    ? `${label('ctx', colors)} ${coloredBar(percent, barWidth, gradient)} ${contextValueDisplay}`
+    : `${label('ctx', colors)} ${contextValueDisplay}`;
 
   if (display?.showTokenBreakdown !== false && percent >= 85) {
     const usage = ctx.stdin.context_window?.current_usage;
@@ -71,5 +71,10 @@ function formatContextValue(ctx: RenderContext, percent: number, mode: 'percent'
     return `${Math.max(0, 100 - percent)}%`;
   }
 
+  // 'percent' mode: show plain % at low usage; auto-append (used/total) once
+  // we cross 70% so the absolute headroom is visible when it matters.
+  if (percent >= 70 && size > 0) {
+    return `${percent}% (${formatTokens(totalTokens)}/${formatTokens(size)})`;
+  }
   return `${percent}%`;
 }
