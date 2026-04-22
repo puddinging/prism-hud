@@ -1,7 +1,7 @@
 {
   "name": "prism-hud",
   "description": "Claude Code statusline HUD with a per-position gradient progress bar — cool blue → warm red. Forked from jarrodwatts/claude-hud.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "jiefeng.wang",
     "url": "https://github.com/puddinging"

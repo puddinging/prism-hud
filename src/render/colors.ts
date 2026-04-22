@@ -128,19 +128,21 @@ export function getQuotaColor(percent: number, colors?: Partial<HudColorOverride
   return resolveAnsi(colors?.usage, BRIGHT_BLUE);
 }
 
-// 10-step vibrant gradient: cool sky-blue → warm red.
-// Matches the #09A5F7 tech aesthetic at uniform high saturation.
+// 10-step traffic-light gradient: green (safe) → yellow (caution) → red (danger).
+// Follows the industry convention for progress / health indicators (Grafana,
+// CloudWatch, DataDog, Tailwind semantic palette). Hex values are Tailwind
+// 400-600 stops, kept at consistent brightness so the hue shift is what reads.
 const GRADIENT_10: string[] = [
-  '#09A5F7',
-  '#00BEE8',
-  '#00D5C4',
-  '#00E094',
-  '#5FDD3A',
-  '#C8D220',
-  '#F2B81A',
-  '#FF8A00',
-  '#FF5020',
-  '#FF2020',
+  '#10B981', // emerald-500 — safe
+  '#22C55E', // green-500
+  '#84CC16', // lime-500
+  '#A3E635', // lime-400
+  '#EAB308', // yellow-500 — caution
+  '#F59E0B', // amber-500
+  '#F97316', // orange-500
+  '#EA580C', // orange-600
+  '#EF4444', // red-500 — danger
+  '#DC2626', // red-600 — critical
 ];
 
 const EMPTY_DOT_COLOR = '\x1b[38;2;125;122;114m';

@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.1.2] - 2026-04-22
+
+### Changed
+
+- **Gradient reordered to traffic-light convention.** Previous 0.1.0 palette started at sky-blue (`#09A5F7`) and went through cyan/teal/green/yellow/red, which doesn't match industry semantics for progress bars. The new palette starts at green (`#10B981` emerald-500) and ends at red (`#DC2626` red-600), passing through lime / yellow / amber / orange in between. Every color is drawn from Tailwind's 400-600 semantic stops, matching how Grafana, CloudWatch, DataDog, and most dashboard tooling signal health.
+- Text color still follows the last filled dot, so low-usage percentages now read green instead of blue.
+
 ## [0.1.1] - 2026-04-22
 
 ### Changed

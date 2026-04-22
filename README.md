@@ -11,18 +11,20 @@ A Claude Code statusline HUD with a **per-position gradient progress bar** — e
 
 ## Gradient palette (10 steps)
 
-| Pos | Hex | Name |
-|-----|-----|------|
-| 1 | `#09A5F7` | sky blue |
-| 2 | `#00BEE8` | bright cyan |
-| 3 | `#00D5C4` | cyan-teal |
-| 4 | `#00E094` | teal-green |
-| 5 | `#5FDD3A` | lime-green |
-| 6 | `#C8D220` | lemon |
-| 7 | `#F2B81A` | amber |
-| 8 | `#FF8A00` | orange |
-| 9 | `#FF5020` | red-orange |
-| 10 | `#FF2020` | bright red |
+| Pos | Hex | Tailwind stop | Semantic |
+|-----|-----|---------------|----------|
+| 1 | `#10B981` | emerald-500 | safe |
+| 2 | `#22C55E` | green-500 | |
+| 3 | `#84CC16` | lime-500 | |
+| 4 | `#A3E635` | lime-400 | |
+| 5 | `#EAB308` | yellow-500 | caution |
+| 6 | `#F59E0B` | amber-500 | |
+| 7 | `#F97316` | orange-500 | |
+| 8 | `#EA580C` | orange-600 | |
+| 9 | `#EF4444` | red-500 | danger |
+| 10 | `#DC2626` | red-600 | critical |
+
+Follows the industry convention for progress / health indicators (green = safe, yellow = caution, red = danger), using Tailwind's semantic 400-600 stops.
 
 ## Install
 
