@@ -1,7 +1,7 @@
 import type { RenderContext } from '../../types.js';
 import { isLimitReached } from '../../types.js';
 import { getProviderLabel } from '../../stdin.js';
-import { critical, label, getQuotaColor, quotaBar, RESET } from '../colors.js';
+import { critical, label, getGradientTextColor, quotaBar, RESET } from '../colors.js';
 import { getAdaptiveBarWidth } from '../../utils/terminal.js';
 
 export function renderUsageLine(ctx: RenderContext): string | null {
@@ -79,11 +79,11 @@ export function renderUsageLine(ctx: RenderContext): string | null {
   return `${usageLabel} ${fiveHourPart}`;
 }
 
-function formatUsagePercent(percent: number | null, colors?: RenderContext['config']['colors']): string {
+function formatUsagePercent(percent: number | null, colors: RenderContext['config']['colors'] | undefined, width: number): string {
   if (percent === null) {
     return label('--', colors);
   }
-  const color = getQuotaColor(percent, colors);
+  const color = getGradientTextColor(percent, width);
   return `${color}${percent}%${RESET}`;
 }
 
@@ -104,7 +104,7 @@ function formatUsageWindowPart({
   barWidth: number;
   forceLabel?: boolean;
 }): string {
-  const usageDisplay = formatUsagePercent(percent, colors);
+  const usageDisplay = formatUsagePercent(percent, colors, barWidth);
   const reset = formatResetTime(resetAt);
 
   if (usageBarEnabled) {

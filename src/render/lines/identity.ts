@@ -1,6 +1,6 @@
 import type { RenderContext } from '../../types.js';
 import { getContextPercent, getBufferedPercent, getTotalTokens } from '../../stdin.js';
-import { coloredBar, label, getContextColor, RESET } from '../colors.js';
+import { coloredBar, label, getGradientTextColor, RESET } from '../colors.js';
 import { getAdaptiveBarWidth } from '../../utils/terminal.js';
 
 const DEBUG = process.env.DEBUG?.includes('prism-hud') || process.env.DEBUG === '*';
@@ -19,7 +19,7 @@ export function renderIdentityLine(ctx: RenderContext): string {
   const display = ctx.config?.display;
   const contextValueMode = display?.contextValue ?? 'percent';
   const contextValue = formatContextValue(ctx, percent, contextValueMode);
-  const contextValueDisplay = `${getContextColor(percent, colors)}${contextValue}${RESET}`;
+  const contextValueDisplay = `${getGradientTextColor(percent, getAdaptiveBarWidth())}${contextValue}${RESET}`;
 
   let line = display?.showContextBar !== false
     ? `${label('Context', colors)} ${coloredBar(percent, getAdaptiveBarWidth(), colors)} ${contextValueDisplay}`

@@ -2,7 +2,7 @@ import type { RenderContext } from '../types.js';
 import { isLimitReached } from '../types.js';
 import { getContextPercent, getBufferedPercent, getModelName, getProviderLabel, getTotalTokens } from '../stdin.js';
 import { getOutputSpeed } from '../speed-tracker.js';
-import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, getContextColor, getQuotaColor, quotaBar, custom as customColor, RESET } from './colors.js';
+import { coloredBar, critical, git as gitColor, gitBranch as gitBranchColor, label, model as modelColor, project as projectColor, red, getGradientTextColor, quotaBar, custom as customColor, RESET } from './colors.js';
 import { getAdaptiveBarWidth } from '../utils/terminal.js';
 
 const DEBUG = process.env.DEBUG?.includes('prism-hud') || process.env.DEBUG === '*';
@@ -31,7 +31,7 @@ export function renderSessionLine(ctx: RenderContext): string {
   const display = ctx.config?.display;
   const contextValueMode = display?.contextValue ?? 'percent';
   const contextValue = formatContextValue(ctx, percent, contextValueMode);
-  const contextValueDisplay = `${getContextColor(percent, colors)}${contextValue}${RESET}`;
+  const contextValueDisplay = `${getGradientTextColor(percent, barWidth)}${contextValue}${RESET}`;
 
   // Model and context bar (FIRST)
   const providerLabel = getProviderLabel(ctx.stdin);
@@ -268,11 +268,11 @@ function formatContextValue(ctx: RenderContext, percent: number, mode: 'percent'
   return `${percent}%`;
 }
 
-function formatUsagePercent(percent: number | null, colors?: RenderContext['config']['colors']): string {
+function formatUsagePercent(percent: number | null, colors: RenderContext['config']['colors'] | undefined, width: number): string {
   if (percent === null) {
     return label('--', colors);
   }
-  const color = getQuotaColor(percent, colors);
+  const color = getGradientTextColor(percent, width);
   return `${color}${percent}%${RESET}`;
 }
 
@@ -293,7 +293,7 @@ function formatUsageWindowPart({
   barWidth: number;
   forceLabel?: boolean;
 }): string {
-  const usageDisplay = formatUsagePercent(percent, colors);
+  const usageDisplay = formatUsagePercent(percent, colors, barWidth);
   const reset = formatResetTime(resetAt);
 
   if (usageBarEnabled) {

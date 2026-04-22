@@ -152,6 +152,19 @@ function gradientColorAt(position: number, width: number): string {
   return hexToAnsi(GRADIENT_10[clamped]);
 }
 
+/**
+ * Returns the gradient color of the last filled dot at the given percentage,
+ * so accompanying text (e.g. "25%") matches the tip of the bar.
+ * Falls back to the first gradient stop when no dot would be filled.
+ */
+export function getGradientTextColor(percent: number, width: number = 10): string {
+  const safeWidth = Number.isFinite(width) ? Math.max(1, Math.round(width)) : 10;
+  const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+  const filled = Math.round((safePercent / 100) * safeWidth);
+  if (filled === 0) return hexToAnsi(GRADIENT_10[0]);
+  return gradientColorAt(filled - 1, safeWidth);
+}
+
 export function gradientBar(percent: number, width: number = 10): string {
   const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
   const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;

@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.1.1] - 2026-04-22
+
+### Changed
+
+- **Percentage text color now tracks the last filled dot.** Previously the "25%", "17%", etc. labels used a three-tier threshold color (green / yellow / red). Now they read the exact gradient color of the rightmost lit dot in the bar — 2 dots lit means the text is bright cyan, 7 dots lit means amber, 10 dots lit means bright red. Context / 5h Usage / 7d Usage / Memory labels all follow this rule.
+- `getContextColor` and `getQuotaColor` are no longer used for text coloring; their bar-fill usage had already been superseded in 0.1.0.
+
 ## [0.1.0] - 2026-04-22
 
 Initial release under the prism-hud name.
