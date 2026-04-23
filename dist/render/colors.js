@@ -204,15 +204,42 @@ export function gradientText(text, percent, width, gradient = DEFAULT_GRADIENT) 
     }
     return result + RESET;
 }
+/**
+ * Brightness factor for the boundary "ghost" cell — the partially-lit dot
+ * that appears at the edge of the fill when `percent > 0` but no full dot
+ * would have been rendered.
+ *
+ * Tuned so the ghost reads as the same hue family as full dots but slightly
+ * brighter than the surrounding empty cells. sRGB scaling is non-linear
+ * (perceived ≈ rgb^2.2), so values below ~0.55 sink darker than the empty
+ * slate background and the dot reads as a different color rather than
+ * "same green, dimmer".
+ */
+const GHOST_BRIGHTNESS = 0.65;
+function ghostColorAt(position, width, palette) {
+    if (palette.length === 0)
+        return '';
+    const hex = palette.length === 1 || width <= 1
+        ? palette[0]
+        : palette[Math.min(palette.length - 1, Math.max(0, Math.round((position / (width - 1)) * (palette.length - 1))))];
+    const { r, g, b } = hexToRgb(hex);
+    return `\x1b[38;2;${Math.round(r * GHOST_BRIGHTNESS)};${Math.round(g * GHOST_BRIGHTNESS)};${Math.round(b * GHOST_BRIGHTNESS)}m`;
+}
 export function gradientBar(percent, width = 10, gradient = DEFAULT_GRADIENT) {
     const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
     const safeWidth = Number.isFinite(width) ? Math.max(0, Math.round(width)) : 0;
     const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
     const filled = Math.round((safePercent / 100) * safeWidth);
-    const empty = safeWidth - filled;
+    // Always give the bar a visible starting point: when percent > 0 but the
+    // rounded fill is 0, render a single dimmed dot at the head of the bar.
+    const showBoundary = filled === 0 && safePercent > 0 && safeWidth >= 1;
+    const empty = showBoundary ? safeWidth - 1 : safeWidth - filled;
     let result = '';
     for (let i = 0; i < filled; i++) {
         result += `${gradientColorAt(i, safeWidth, palette)}${getFilledCharAt(i, gradient.filledChar)}${RESET}`;
+    }
+    if (showBoundary) {
+        result += `${ghostColorAt(0, safeWidth, palette)}${getFilledCharAt(0, gradient.filledChar)}${RESET}`;
     }
     if (empty > 0) {
         const emptyAnsi = resolveAnsi(gradient.emptyColor, DIM);

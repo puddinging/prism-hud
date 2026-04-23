@@ -74,7 +74,7 @@ export const DEFAULT_CONFIG = {
             '#FF1744',
         ],
         filledChar: '●',
-        emptyChar: '·',
+        emptyChar: '⋅',
         emptyColor: '#7D7A72',
     },
 };

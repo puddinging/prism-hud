@@ -1,5 +1,5 @@
 import { getContextPercent, getBufferedPercent, getTotalTokens } from '../../stdin.js';
-import { coloredBar, label, getGradientTextColor, RESET } from '../colors.js';
+import { coloredBar, critical, dim, label, getGradientTextColor, RESET } from '../colors.js';
 import { getAdaptiveBarWidth } from '../../utils/terminal.js';
 const DEBUG = process.env.DEBUG?.includes('prism-hud') || process.env.DEBUG === '*';
 export function renderIdentityLine(ctx) {
@@ -17,15 +17,16 @@ export function renderIdentityLine(ctx) {
     const contextValueMode = display?.contextValue ?? 'percent';
     const contextValue = formatContextValue(ctx, percent, contextValueMode);
     const contextValueDisplay = `${getGradientTextColor(percent, barWidth, gradient)}${contextValue}${RESET}`;
+    const sigil = percent >= 85 ? `${critical('▲', colors)} ` : '';
     let line = display?.showContextBar !== false
-        ? `${label('ctx', colors)} ${coloredBar(percent, barWidth, gradient)} ${contextValueDisplay}`
-        : `${label('ctx', colors)} ${contextValueDisplay}`;
+        ? `${sigil}${label('ctx', colors)} ${coloredBar(percent, barWidth, gradient)} ${contextValueDisplay}`
+        : `${sigil}${label('ctx', colors)} ${contextValueDisplay}`;
     if (display?.showTokenBreakdown !== false && percent >= 85) {
         const usage = ctx.stdin.context_window?.current_usage;
         if (usage) {
             const input = formatTokens(usage.input_tokens ?? 0);
             const cache = formatTokens((usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0));
-            line += label(` (in: ${input}, cache: ${cache})`, colors);
+            line += ` ${dim('·')} ${label(`in ${input} cache ${cache}`, colors)}`;
         }
     }
     return line;
@@ -50,17 +51,17 @@ function formatContextValue(ctx, percent, mode) {
     }
     if (mode === 'both') {
         if (size > 0) {
-            return `${percent}% (${formatTokens(totalTokens)}/${formatTokens(size)})`;
+            return `${percent}% · ${formatTokens(totalTokens)}/${formatTokens(size)}`;
         }
         return `${percent}%`;
     }
     if (mode === 'remaining') {
         return `${Math.max(0, 100 - percent)}%`;
     }
-    // 'percent' mode: show plain % at low usage; auto-append (used/total) once
+    // 'percent' mode: show plain % at low usage; auto-append used/total once
     // we cross 70% so the absolute headroom is visible when it matters.
     if (percent >= 70 && size > 0) {
-        return `${percent}% (${formatTokens(totalTokens)}/${formatTokens(size)})`;
+        return `${percent}% · ${formatTokens(totalTokens)}/${formatTokens(size)}`;
     }
     return `${percent}%`;
 }
