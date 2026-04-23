@@ -107,8 +107,8 @@ test('renderSessionLine adds token breakdown when context is high', () => {
   // For 90%: (tokens + 33000) / 200000 = 0.9 → tokens = 147000
   ctx.stdin.context_window.current_usage.input_tokens = 147000;
   const line = stripAnsi(renderSessionLine(ctx));
-  assert.ok(line.includes('in:'), 'expected token breakdown');
-  assert.ok(line.includes('cache:'), 'expected cache breakdown');
+  assert.ok(line.includes(' in '), 'expected token breakdown');
+  assert.ok(line.includes(' cache '), 'expected cache breakdown');
 });
 
 test('renderSessionLine includes duration and formats large tokens', () => {
@@ -134,7 +134,7 @@ test('renderSessionLine handles missing input tokens and cache creation usage', 
   };
   const line = stripAnsi(renderSessionLine(ctx));
   assert.ok(line.includes('90%'));
-  assert.ok(line.includes('in: 0'));
+  assert.ok(line.includes('in 0'));
 });
 
 test('renderSessionLine handles missing cache token fields', () => {
@@ -145,7 +145,7 @@ test('renderSessionLine handles missing cache token fields', () => {
     input_tokens: 147000,
   };
   const line = stripAnsi(renderSessionLine(ctx));
-  assert.ok(line.includes('cache: 0'));
+  assert.ok(line.includes('cache 0'));
 });
 
 test('getContextColor returns yellow for warning threshold', () => {
@@ -261,7 +261,7 @@ test('renderSessionLine supports combined context display', () => {
   ctx.stdin.context_window.context_window_size = 200000;
   ctx.stdin.context_window.current_usage.input_tokens = 12345;
   const line = stripAnsi(renderSessionLine(ctx));
-  assert.ok(line.includes('7% (12k/200k)'), 'should include percentage and token counts');
+  assert.ok(line.includes('7% · 12k/200k'), 'should include percentage and token counts');
 });
 
 test('render expanded layout supports remaining-based context display', () => {

@@ -41,15 +41,16 @@ export function renderSessionLine(ctx: RenderContext): string {
   const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
   const modelQualifier = providerLabel ?? (showUsage && hasApiKey ? red('API') : undefined);
   const modelDisplay = modelQualifier ? `${model} | ${modelQualifier}` : model;
+  const sigil = percent >= 85 ? `${critical('▲', colors)} ` : '';
 
   if (display?.showModel !== false && display?.showContextBar !== false) {
-    parts.push(`${modelColor(`[${modelDisplay}]`, colors)} ${bar} ${contextValueDisplay}`);
+    parts.push(`${sigil}${modelColor(`[${modelDisplay}]`, colors)} ${bar} ${contextValueDisplay}`);
   } else if (display?.showModel !== false) {
-    parts.push(`${modelColor(`[${modelDisplay}]`, colors)} ${contextValueDisplay}`);
+    parts.push(`${sigil}${modelColor(`[${modelDisplay}]`, colors)} ${contextValueDisplay}`);
   } else if (display?.showContextBar !== false) {
-    parts.push(`${bar} ${contextValueDisplay}`);
+    parts.push(`${sigil}${bar} ${contextValueDisplay}`);
   } else {
-    parts.push(contextValueDisplay);
+    parts.push(`${sigil}${contextValueDisplay}`);
   }
 
   // Project path + git status (SECOND)
@@ -230,7 +231,7 @@ export function renderSessionLine(ctx: RenderContext): string {
     if (usage) {
       const input = formatTokens(usage.input_tokens ?? 0);
       const cache = formatTokens((usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0));
-      line += label(` (in: ${input}, cache: ${cache})`, colors);
+      line += ` ${dim('·')} ${label(`in ${input} cache ${cache}`, colors)}`;
     }
   }
 
@@ -260,7 +261,7 @@ function formatContextValue(ctx: RenderContext, percent: number, mode: 'percent'
 
   if (mode === 'both') {
     if (size > 0) {
-      return `${percent}% (${formatTokens(totalTokens)}/${formatTokens(size)})`;
+      return `${percent}% · ${formatTokens(totalTokens)}/${formatTokens(size)}`;
     }
     return `${percent}%`;
   }
