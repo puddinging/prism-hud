@@ -6,6 +6,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.4.0] - 2026-04-23
+
+### Fixed
+
+- **Marketplace install actually works now.** Tests and skill commands still referenced the old `claude-hud` plugin namespace, so `build-dist.yml` failed on every push and never committed `dist/` back to `main`. Releases ended up with no build artifact at the tag, and the Node fallback in `/prism-hud:setup` couldn't run. After this release, `/plugin install prism-hud` followed by `/reload-plugins` and `/prism-hud:setup` works on plain Node — Bun is still preferred for faster cold start but no longer required.
+- **`/prism-hud:setup` no longer reads from the wrong cache path.** Skill text was still pointing at `plugins/cache/claude-hud/claude-hud/*/`, which meant a literal read would miss the installed plugin. All skill path references now match `plugins/cache/prism-hud/prism-hud/*/`, including the ghost-install detector and the generated `statusLine` command.
+- **Star URL corrected.** `/prism-hud:setup` was still offering to star the upstream repo (`jarrodwatts/claude-hud`) instead of this fork.
+
+### Added
+
+- **Overflow sigil.** When context crosses 85%, a red `▲` is prepended to the identity / session line so you can see the danger marker before reading the percentage.
+- **Ghost boundary cell on the gradient bar.** When `percent > 0` but no full dot would have rendered yet, the edge slot is painted in a brightness-tuned variant of the gradient hue at that position. Keeps low-percent bars from looking completely unlit.
+
+### Changed
+
+- **Compact token / context separators.** `(in: 147k, cache: 220k)` collapsed to ` · in 147k cache 220k`, and `92% (920k/1.0M)` collapsed to `92% · 920k/1.0M`. Saves columns and keeps the eye on the numbers instead of the brackets.
+- **Lighter empty-dot glyph by default.** Default `gradient.emptyChar` went from `·` (middle dot) to `⋅` (dot operator) so empty slots don't visually compete with filled dots at low fill levels.
+- **Install documentation rewritten** to match upstream's three-step flow with collapsible Linux EXDEV and Windows Node.js blocks. The old README skipped `/reload-plugins`, which is why first-time users kept hitting "Unknown command: /prism-hud:setup".
+
 ## [0.3.0] - 2026-04-22
 
 ### Added
