@@ -1,0 +1,105 @@
+import { isLimitReached } from '../../types.js';
+import { getProviderLabel } from '../../stdin.js';
+import { critical, dim, label, gradientText, quotaBar } from '../colors.js';
+import { getAdaptiveBarWidth } from '../../utils/terminal.js';
+export function renderUsageLine(ctx) {
+    const display = ctx.config?.display;
+    const colors = ctx.config?.colors;
+    const gradient = ctx.config?.gradient;
+    if (display?.showUsage === false) {
+        return null;
+    }
+    if (!ctx.usageData) {
+        return null;
+    }
+    if (getProviderLabel(ctx.stdin)) {
+        return null;
+    }
+    if (isLimitReached(ctx.usageData)) {
+        const resetTime = ctx.usageData.fiveHour === 100
+            ? formatResetTime(ctx.usageData.fiveHourResetAt)
+            : formatResetTime(ctx.usageData.sevenDayResetAt);
+        return critical(`⚠ Limit reached${resetTime ? ` ↻${resetTime}` : ''}`, colors);
+    }
+    const threshold = display?.usageThreshold ?? 0;
+    const fiveHour = ctx.usageData.fiveHour;
+    const sevenDay = ctx.usageData.sevenDay;
+    const effectiveUsage = Math.max(fiveHour ?? 0, sevenDay ?? 0);
+    if (effectiveUsage < threshold) {
+        return null;
+    }
+    const usageBarEnabled = display?.usageBarEnabled ?? true;
+    const sevenDayThreshold = display?.sevenDayThreshold ?? 80;
+    const barWidth = getAdaptiveBarWidth();
+    if (fiveHour === null && sevenDay !== null) {
+        return formatUsageWindowPart({
+            label: '7d',
+            percent: sevenDay,
+            resetAt: ctx.usageData.sevenDayResetAt,
+            colors,
+            gradient,
+            usageBarEnabled,
+            barWidth,
+        });
+    }
+    const fiveHourPart = formatUsageWindowPart({
+        label: '5h',
+        percent: fiveHour,
+        resetAt: ctx.usageData.fiveHourResetAt,
+        colors,
+        gradient,
+        usageBarEnabled,
+        barWidth,
+    });
+    if (sevenDay !== null && sevenDay >= sevenDayThreshold) {
+        const sevenDayPart = formatUsageWindowPart({
+            label: '7d',
+            percent: sevenDay,
+            resetAt: ctx.usageData.sevenDayResetAt,
+            colors,
+            gradient,
+            usageBarEnabled,
+            barWidth,
+        });
+        return `${fiveHourPart} ${dim('│')} ${sevenDayPart}`;
+    }
+    return fiveHourPart;
+}
+function formatUsagePercent(percent, colors, width, gradient) {
+    if (percent === null) {
+        return label('--', colors);
+    }
+    return gradientText(`${percent}%`, percent, width, gradient);
+}
+function formatUsageWindowPart({ label: windowLabel, percent, resetAt, colors, gradient, usageBarEnabled, barWidth, }) {
+    const usageDisplay = formatUsagePercent(percent, colors, barWidth, gradient);
+    const reset = formatResetTime(resetAt);
+    const tag = label(windowLabel, colors);
+    const tail = reset ? ` ${label(`↻${reset}`, colors)}` : '';
+    if (usageBarEnabled) {
+        return `${tag} ${quotaBar(percent ?? 0, barWidth, gradient)} ${usageDisplay}${tail}`;
+    }
+    return `${tag} ${usageDisplay}${tail}`;
+}
+function formatResetTime(resetAt) {
+    if (!resetAt)
+        return '';
+    const now = new Date();
+    const diffMs = resetAt.getTime() - now.getTime();
+    if (diffMs <= 0)
+        return '';
+    const diffMins = Math.ceil(diffMs / 60000);
+    if (diffMins < 60)
+        return `${diffMins}m`;
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    if (hours >= 24) {
+        const days = Math.floor(hours / 24);
+        const remHours = hours % 24;
+        if (remHours > 0)
+            return `${days}d${remHours}h`;
+        return `${days}d`;
+    }
+    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
+}
+//# sourceMappingURL=usage.js.map
