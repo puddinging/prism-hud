@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.4.1] - 2026-04-23
+
+### Fixed
+
+- **Percentage text gradient now reflects every lit dot color.** Short text (e.g. `45%` against 5 lit dots) used to sample the gradient at exact palette indices — positions 0, 2, 4 — so the intermediate lit colors `c1` and `c3` never appeared in the text. Each character now represents a slot of the lit-dot range and is colored by the average of that slot, so every lit color contributes. Longer text (`abcdefghij`) is visually unchanged; only short text regains the full-range feel.
+
 ## [0.4.0] - 2026-04-23
 
 ### Fixed

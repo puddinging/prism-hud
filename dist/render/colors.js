@@ -151,29 +151,34 @@ function hexToRgb(hex) {
  * Sample a color at a continuous palette position (0..palette.length-1),
  * linearly interpolating in RGB space between adjacent stops.
  */
-function sampleGradientAnsi(palette, position) {
+function sampleGradientRgb(palette, position) {
     if (palette.length === 0)
-        return '';
+        return { r: 0, g: 0, b: 0 };
     if (palette.length === 1)
-        return hexToAnsi(palette[0]);
+        return hexToRgb(palette[0]);
     const clamped = Math.max(0, Math.min(palette.length - 1, position));
     const lo = Math.floor(clamped);
     const hi = Math.min(palette.length - 1, lo + 1);
     if (lo === hi)
-        return hexToAnsi(palette[lo]);
+        return hexToRgb(palette[lo]);
     const t = clamped - lo;
     const a = hexToRgb(palette[lo]);
     const b = hexToRgb(palette[hi]);
-    const r = Math.round(a.r + (b.r - a.r) * t);
-    const g = Math.round(a.g + (b.g - a.g) * t);
-    const bl = Math.round(a.b + (b.b - a.b) * t);
-    return `\x1b[38;2;${r};${g};${bl}m`;
+    return {
+        r: a.r + (b.r - a.r) * t,
+        g: a.g + (b.g - a.g) * t,
+        b: a.b + (b.b - a.b) * t,
+    };
+}
+function rgbToAnsi(r, g, b) {
+    return `\x1b[38;2;${Math.round(r)};${Math.round(g)};${Math.round(b)}m`;
 }
 /**
  * Colors `text` with a gradient built from the *actual colors of the filled
- * bar dots*, in left-to-right order. Text characters interpolate continuously
- * between those colors. If only one dot is filled, the text is that single
- * color (no gradient — that's fine).
+ * bar dots*, in left-to-right order. Each character maps to a slot of the
+ * lit-dot range and is colored by averaging the gradient across that slot,
+ * so every lit color contributes — even when the text is shorter than the
+ * number of lit dots (e.g. "45%" against 5 lit dots no longer skips c1/c3).
  */
 export function gradientText(text, percent, width, gradient = DEFAULT_GRADIENT) {
     const palette = gradient.colors.length > 0 ? gradient.colors : DEFAULT_GRADIENT.colors;
@@ -190,12 +195,29 @@ export function gradientText(text, percent, width, gradient = DEFAULT_GRADIENT) 
             : Math.round((i / (safeWidth - 1)) * (palette.length - 1));
         subPalette.push(palette[Math.min(palette.length - 1, Math.max(0, idx))]);
     }
+    const N = chars.length;
+    const M = subPalette.length;
+    const maxIndex = Math.max(0, M - 1);
     let result = '';
     let prevAnsi = '';
-    for (let i = 0; i < chars.length; i++) {
-        const t = chars.length === 1 ? 0 : i / (chars.length - 1);
-        const position = t * Math.max(0, subPalette.length - 1);
-        const ansi = sampleGradientAnsi(subPalette, position);
+    for (let i = 0; i < N; i++) {
+        // Slot spans a fraction of the gradient index range [0, M-1]. Averaging
+        // across it (rather than sampling a single point) ensures intermediate
+        // lit colors are represented even when N < M.
+        const slotStart = (i / N) * maxIndex;
+        const slotEnd = ((i + 1) / N) * maxIndex;
+        const slotWidth = slotEnd - slotStart;
+        const samples = Math.max(3, Math.min(16, Math.ceil(slotWidth) + 2));
+        let r = 0, g = 0, b = 0;
+        for (let s = 0; s < samples; s++) {
+            const t = samples === 1 ? 0.5 : s / (samples - 1);
+            const pos = slotStart + slotWidth * t;
+            const rgb = sampleGradientRgb(subPalette, pos);
+            r += rgb.r;
+            g += rgb.g;
+            b += rgb.b;
+        }
+        const ansi = rgbToAnsi(r / samples, g / samples, b / samples);
         if (ansi !== prevAnsi) {
             result += ansi;
             prevAnsi = ansi;

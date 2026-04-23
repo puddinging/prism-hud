@@ -25,9 +25,10 @@ export declare function getQuotaColor(percent: number, colors?: Partial<HudColor
 export declare function getGradientTextColor(percent: number, width?: number, gradient?: GradientConfig): string;
 /**
  * Colors `text` with a gradient built from the *actual colors of the filled
- * bar dots*, in left-to-right order. Text characters interpolate continuously
- * between those colors. If only one dot is filled, the text is that single
- * color (no gradient — that's fine).
+ * bar dots*, in left-to-right order. Each character maps to a slot of the
+ * lit-dot range and is colored by averaging the gradient across that slot,
+ * so every lit color contributes — even when the text is shorter than the
+ * number of lit dots (e.g. "45%" against 5 lit dots no longer skips c1/c3).
  */
 export declare function gradientText(text: string, percent: number, width: number, gradient?: GradientConfig): string;
 export declare function gradientBar(percent: number, width?: number, gradient?: GradientConfig): string;
