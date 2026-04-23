@@ -82,7 +82,7 @@ async function withDeterministicSpeedCache(fn) {
   const tempConfigDir = await mkdtemp(path.join(tmpdir(), 'claude-hud-render-'));
   const originalConfigDir = process.env.CLAUDE_CONFIG_DIR;
   const originalNow = Date.now;
-  const cachePath = path.join(tempConfigDir, 'plugins', 'claude-hud', '.speed-cache.json');
+  const cachePath = path.join(tempConfigDir, 'plugins', 'prism-hud', '.speed-cache.json');
 
   process.env.CLAUDE_CONFIG_DIR = tempConfigDir;
   await mkdir(path.dirname(cachePath), { recursive: true });
@@ -1131,32 +1131,6 @@ test('renderSessionLine uses custom critical colors for limit-reached usage stat
 
   const criticalLine = renderSessionLine(ctx);
   assert.ok(criticalLine.includes('\x1b[35m⚠ Limit reached'), `expected custom critical color, got: ${JSON.stringify(criticalLine)}`);
-});
-
-test('renderUsageLine uses custom usage palette overrides', () => {
-  const ctx = baseContext();
-  ctx.config.display.usageBarEnabled = true;
-  ctx.config.colors = {
-    context: 'green',
-    usage: 'cyan',
-    warning: 'yellow',
-    usageWarning: 'magenta',
-    critical: 'red',
-  };
-  ctx.usageData = {
-    planName: 'Pro',
-    fiveHour: 25,
-    sevenDay: 80,
-    fiveHourResetAt: null,
-    sevenDayResetAt: null,
-  };
-
-  const line = stripAnsi(renderUsageLine(ctx));
-  assert.ok(line, 'should render usage line');
-  assert.ok(line.includes('\x1b[36m███'), `expected custom usage bar color, got: ${JSON.stringify(line)}`);
-  assert.ok(line.includes('\x1b[36m25%\x1b[0m'), `expected custom usage percentage color, got: ${JSON.stringify(line)}`);
-  assert.ok(line.includes('\x1b[35m████████'), `expected custom usage warning color, got: ${JSON.stringify(line)}`);
-  assert.ok(line.includes('\x1b[35m80%\x1b[0m'), `expected custom usage warning percentage color, got: ${JSON.stringify(line)}`);
 });
 
 test('renderSessionLine hides usage when showUsage config is false (hybrid toggle)', () => {

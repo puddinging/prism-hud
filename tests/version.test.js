@@ -94,7 +94,7 @@ test('getClaudeCodeVersion persists cache across process resets under CLAUDE_CON
     assert.equal(execCalls, 1);
     assert.equal(resolveCalls, 1);
 
-    const cachePath = path.join(customConfigDir, 'plugins', 'claude-hud', '.claude-code-version-cache.json');
+    const cachePath = path.join(customConfigDir, 'plugins', 'prism-hud', '.claude-code-version-cache.json');
     assert.equal(existsSync(cachePath), true);
 
     _resetVersionCache();
