@@ -28,15 +28,61 @@ Follows the progress-bar convention (green = safe, yellow = caution, red = dange
 
 ## Install
 
-### Via Claude Code marketplace
+Requires Node.js 18+ on the machine running Claude Code. Bun works too and is faster, but optional.
 
+Inside a Claude Code instance, run the following commands:
+
+**Step 1: Add the marketplace**
 ```
 /plugin marketplace add puddinging/prism-hud
+```
+
+**Step 2: Install the plugin**
+
+<details>
+<summary><strong>⚠️ Linux users: Click here first</strong></summary>
+
+On Linux, `/tmp` is often a separate filesystem (tmpfs), which causes plugin installation to fail with:
+```
+EXDEV: cross-device link not permitted
+```
+
+**Fix**: Set TMPDIR before installing:
+```bash
+mkdir -p ~/.cache/tmp && TMPDIR=~/.cache/tmp claude
+```
+
+Then run the install command below in that session. This is a [Claude Code platform limitation](https://github.com/anthropics/claude-code/issues/14799).
+
+</details>
+
+```
 /plugin install prism-hud
+```
+
+After that, reload plugins so the `/prism-hud:setup` slash command becomes available:
+
+```
+/reload-plugins
+```
+
+**Step 3: Configure the statusline**
+```
 /prism-hud:setup
 ```
 
-Then restart Claude Code so the new `statusLine` command is picked up.
+<details>
+<summary><strong>⚠️ Windows users: Click here if setup says no JavaScript runtime was found</strong></summary>
+
+On Windows, Node.js LTS is the supported runtime for prism-hud setup. If setup says no JavaScript runtime was found, install Node.js for your shell first:
+```powershell
+winget install OpenJS.NodeJS.LTS
+```
+Then restart your shell and run `/prism-hud:setup` again.
+
+</details>
+
+Done! **Fully quit Claude Code and start it again** — `statusLine` only takes effect on a fresh process, `/reload-plugins` is not enough here. Once restarted, the HUD will appear below your input.
 
 ### Manual (local clone)
 
@@ -47,9 +93,16 @@ npm install
 npm run build
 ```
 
-Then wire it up by editing `~/.claude/settings.json`:
+Then wire it up by editing `~/.claude/settings.json`. Pick whichever runtime you have:
 
 ```json
+// Node (uses the built dist/)
+"statusLine": {
+  "type": "command",
+  "command": "node \"$HOME/path/to/prism-hud/dist/index.js\""
+}
+
+// Bun (runs src/ directly, slightly faster cold start)
 "statusLine": {
   "type": "command",
   "command": "exec bun --env-file /dev/null \"$HOME/path/to/prism-hud/src/index.ts\""
