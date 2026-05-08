@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](ht
 
 > prism-hud forked from [`jarrodwatts/claude-hud`](https://github.com/jarrodwatts/claude-hud) at upstream commit `30e1dfe` (post-0.0.11). Earlier upstream release notes are preserved in the [claude-hud CHANGELOG](https://github.com/jarrodwatts/claude-hud/blob/main/CHANGELOG.md).
 
+## [0.4.2] - 2026-05-08
+
+### Changed
+
+- **Toolchain bump.** `typescript` to `^6.0.3`, `@types/node` to `^25.6.0`. No source or runtime behavior changes; `dist/` recompiled under the new TypeScript.
+
 ## [0.4.1] - 2026-04-23
 
 ### Fixed
